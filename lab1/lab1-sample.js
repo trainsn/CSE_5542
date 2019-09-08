@@ -89,6 +89,8 @@ function initScene() {
 }
 
 function drawScene() {
+    resize(gl.canvas)
+
     vp_minX = 0; vp_maxX = gl.canvasWidth;  vp_width = vp_maxX- vp_minX+1; 
     vp_minY = 0; vp_maxY = gl.canvasHeight; vp_height = vp_maxY-vp_minY+1; 
     console.log(vp_minX, vp_maxX, vp_minY, vp_maxY); 
@@ -141,6 +143,22 @@ function clearScreen() {
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+}
+
+function resize(canvas) {
+    //get the canvas display size in the browser  
+    var displayWidth = canvas.clientWidth;
+    var displayHeight = canvas.clientHeight;
+
+    //check whether two sizes are the same 
+    if (canvas.width != displayWidth || canvas.height != displayHeight){
+        //set canvas size with canvas display size in the browser
+        canvas.width = displayWidth;
+        canvas.height = displayHeight;
+
+        gl.canvasWidth = canvas.width;
+        gl.canvasHeight = canvas.height;
+    }
 }
 
 
@@ -206,7 +224,7 @@ function clearScreen() {
 
        vbo_vertices.push(NDC_X-0.05*Math.sqrt(3)/2);
        vbo_vertices.push(NDC_Y+0.05/2);
-       vbo_vertices.push(0.0); h
+       vbo_vertices.push(0.0); 
 
        point_counter += 3;
    } 
@@ -228,7 +246,8 @@ function clearScreen() {
        vbo_vertices.push(0.0); 
 
        point_counter += 4;
-   } else if (polygon_mode == 'o'){ 
+   } 
+   else if (polygon_mode == 'o'){ 
        var r = 0.05;
 
        for (var i = 0; i < circle_points; i++){
