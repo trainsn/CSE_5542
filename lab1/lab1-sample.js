@@ -19,13 +19,15 @@ var shape_counter = 0;     // shape size counter
 var point_counter = 0;     // point size counter 
 var old_point_counter = 0;  // point_counter - old_point_counter = how many points in this run
 
-var vbo_vertices = [];  // i only store line vertices, 2 points per click 
+var vbo_vertices = [];  //
 var vbo_colors = []; //
-var colors = [];   // I am not doing colors, but you should :-) 
-var shapes = [];   // the array to store what shapes are in the list 
+var colors = [];   // store the color mode 
+var shapes = [];   // store the shape mode  
 
 var polygon_mode = 'h';  //default = h line 
 var color_mode  = 'r';
+
+var circle_points = 100;
 
 //////////// Init OpenGL Context etc. ///////////////
 
@@ -76,14 +78,6 @@ function CreateBuffer() {
     VertexColorBuffer.itemSize = 4;
     VertexColorBuffer.numItems = shape_counter*2;
 }
-
-///////////////////////////////////////////////////////
-function draw_lines() {   // lab1 sample - draw lines only 
-    gl.bindBuffer(gl.ARRAY_BUFFER, VertexPositionBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, VertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
-    gl.drawArrays(gl.LINES, 0, VertexPositionBuffer.numItems);
-}
-
 ///////////////////////////////////////////////////////////////////////
 
 function initScene() {
@@ -108,10 +102,31 @@ function drawScene() {
     gl.bindBuffer(gl.ARRAY_BUFFER, VertexColorBuffer);
     gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, VertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-    if (polygon_mode == "h" ||  polygon_mode == "v")
-      gl.drawArrays(gl.LINES, 0, VertexPositionBuffer.numItems);
-    else 
-      gl.drawArrays(gl.POINTS, 0, VertexPositionBuffer.numItems);
+    var i;
+    var point_cursor = 0;
+    for (i = 0; i < shape_counter; i++){
+        if (shapes[i] == "h" ||  shapes[i] == "v"){
+            gl.drawArrays(gl.LINES, point_cursor, 2);
+            point_cursor += 2;
+        } else if (shapes[i] == "p") {
+            gl.drawArrays(gl.POINTS, point_cursor, 1);
+            point_cursor += 1;
+        } else if (shapes[i] == "t"){
+            gl.drawArrays(gl.LINE_LOOP, point_cursor, 3);
+            point_cursor += 3;
+        }
+        else if (shapes[i] == "q") {
+            gl.drawArrays(gl.LINE_LOOP, point_cursor, 4);
+            point_cursor += 4;
+        } else if (shapes[i] == 'o'){
+            gl.drawArrays(gl.LINE_LOOP, point_cursor, circle_points);
+            point_cursor += circle_points;
+        }
+    }
+    // if (polygon_mode == "h" |V|  polygon_modeb == "v")
+    //   gl.drawArrays(gl.LINES, 0, VertexPositionBuffer.numItems);
+    // else 
+    //   gl.drawArrays(gl.POINTS, 0, VertexPositionBuffer.numItems);
 }
 
 function clearScreen() {
@@ -180,6 +195,53 @@ function clearScreen() {
 
        point_counter += 2;
    } 
+   else if (polygon_mode == 't') { // add three points of the triangles 
+       vbo_vertices.push(NDC_X);
+       vbo_vertices.push(NDC_Y-0.05);
+       vbo_vertices.push(0.0);
+
+       vbo_vertices.push(NDC_X+0.05*Math.sqrt(3)/2);
+       vbo_vertices.push(NDC_Y+0.05/2);
+       vbo_vertices.push(0.0); 
+
+       vbo_vertices.push(NDC_X-0.05*Math.sqrt(3)/2);
+       vbo_vertices.push(NDC_Y+0.05/2);
+       vbo_vertices.push(0.0); h
+
+       point_counter += 3;
+   } 
+   else if (polygon_mode == 'q' ) { // add four points of the squares
+       vbo_vertices.push(NDC_X-0.05);
+       vbo_vertices.push(NDC_Y-0.05);
+       vbo_vertices.push(0.0); 
+
+       vbo_vertices.push(NDC_X+0.05);
+       vbo_vertices.push(NDC_Y-0.05);
+       vbo_vertices.push(0.0); 
+
+       vbo_vertices.push(NDC_X+0.05);
+       vbo_vertices.push(NDC_Y+0.05);
+       vbo_vertices.push(0.0); 
+
+       vbo_vertices.push(NDC_X-0.05);
+       vbo_vertices.push(NDC_Y+0.05);
+       vbo_vertices.push(0.0); 
+
+       point_counter += 4;
+   } else if (polygon_mode == 'o'){ 
+       var r = 0.05;
+
+       for (var i = 0; i < circle_points; i++){
+          theta = i / circle_points * 2 * Math.PI;
+          var x = r * Math.sin(theta);
+          var y = r * Math.cos(theta);
+          vbo_vertices.push(NDC_X+x);
+          vbo_vertices.push(NDC_Y+y);
+          vbo_vertices.push(0.0); 
+       }
+
+       point_counter += circle_points;
+   }
 
    var i;
    for (i = old_point_counter; i < point_counter; i++){
@@ -273,6 +335,36 @@ function clearScreen() {
                   polygon_mode = 'v'          
               }
               break;
+         case 84: 
+              if (event.shiftKey) {
+                  console.log('enter T'); 
+                  polygon_mode = 't' 
+              }
+              else {
+                  console.log('enter t');
+                  polygon_mode = 't'      
+              }
+              break;
+         case 81: 
+              if (event.shiftKey) {
+                  console.log('enter Q'); 
+                  polygon_mode = 'q' 
+              }
+              else {
+                  console.log('enter q');
+                  polygon_mode = 'q'      
+              }
+              break;  
+         case 79: 
+              if (event.shiftKey) {
+                  console.log('enter O'); 
+                  polygon_mode = 'o' 
+              }
+              else {
+                  console.log('enter o');
+                  polygon_mode = 'o'      
+              }
+              break;       
          case 82:
               if (event.shiftKey) {
                   console.log('enter R');
