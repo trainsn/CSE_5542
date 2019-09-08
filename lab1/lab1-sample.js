@@ -17,8 +17,10 @@ var VertexPositionBuffer;
 
 var shape_counter = 0;     // shape size counter 
 var point_counter = 0;     // point size counter 
+var old_point_counter = 0;  // point_counter - old_point_counter = how many points in this run
 
 var vbo_vertices = [];  // i only store line vertices, 2 points per click 
+var vbo_colors = []; //
 var colors = [];   // I am not doing colors, but you should :-) 
 var shapes = [];   // the array to store what shapes are in the list 
 
@@ -47,6 +49,10 @@ function webGLStart() {
     initShaders();
     shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
     gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
+
+    shaderProgram.vertexColorAttribute = gl.getAttribLocation(shaderProgram, "aVertexColor");
+    gl.enableVertexAttribArray(shaderProgram.vertexColorAttribute);
+
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     initScene();
     
@@ -63,6 +69,12 @@ function CreateBuffer() {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vbo_vertices), gl.STATIC_DRAW);
     VertexPositionBuffer.itemSize = 3;  // NDC'S [x,y,0] 
     VertexPositionBuffer.numItems = shape_counter*2;// this example only draw lines, so n*2 vertices 
+
+    VertexColorBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, VertexColorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vbo_colors), gl.STATIC_DRAW);
+    VertexColorBuffer.itemSize = 4;
+    VertexColorBuffer.numItems = shape_counter*2;
 }
 
 ///////////////////////////////////////////////////////
@@ -92,8 +104,29 @@ function drawScene() {
     // draw_lines();
     gl.bindBuffer(gl.ARRAY_BUFFER, VertexPositionBuffer);
     gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, VertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
-    gl.drawArrays(gl.LINES, 0, VertexPositionBuffer.numItems);
-    }
+    
+    gl.bindBuffer(gl.ARRAY_BUFFER, VertexColorBuffer);
+    gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, VertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    if (polygon_mode == "h" ||  polygon_mode == "v")
+      gl.drawArrays(gl.LINES, 0, VertexPositionBuffer.numItems);
+    else 
+      gl.drawArrays(gl.POINTS, 0, VertexPositionBuffer.numItems);
+}
+
+function clearScreen() {
+    shape_counter = 0;     // shape size counter 
+    point_counter = 0;     // point size counter 
+    old_point_counter = 0;  // point_counter - old_point_counter = how many points in this run
+
+    vbo_vertices = [];  // 
+    vbo_colors = []; //
+    colors = [];   // the array used to store color mode 
+    shapes = [];   // the array to store what shapes are in the list 
+
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+}
 
 
 ///////////////////////////////////////////////////////////////
@@ -115,9 +148,6 @@ function drawScene() {
     //tranform the coordinate from client area to canvas, then tranform to webgl
     NDC_X = ((NDC_X - rect.left) - vp_width/2) / (vp_width/2);
     NDC_Y = (vp_height/2 - (NDC_Y - rect.top)) / (vp_height/2);
-
-	 // var NDC_X = (event.clientX - vp_minX)/vp_width*2 -1; 
-	 // var NDC_Y = ((vp_height-event.clientY) - vp_minY)/vp_height*2 - 1;
 
 	 console.log("NDC click", event.clientX, event.clientY, NDC_X, NDC_Y);
 
@@ -150,6 +180,27 @@ function drawScene() {
 
        point_counter += 2;
    } 
+
+   var i;
+   for (i = old_point_counter; i < point_counter; i++){
+      if (color_mode == 'r'){
+          vbo_colors.push(1.0);
+          vbo_colors.push(0.0);
+          vbo_colors.push(0.0);
+          vbo_colors.push(1.0);
+      } else if (color_mode == 'g'){
+          vbo_colors.push(0.0);
+          vbo_colors.push(1.0);
+          vbo_colors.push(0.0);
+          vbo_colors.push(1.0);
+      } else if (color_mode == 'b'){
+          vbo_colors.push(0.0);
+          vbo_colors.push(0.0);
+          vbo_colors.push(1.0);
+          vbo_colors.push(1.0);
+      }
+   }
+   old_point_counter = point_counter;
 	 
 	 shapes.push(polygon_mode);
 	 colors.push(color_mode); 
@@ -159,7 +210,7 @@ function drawScene() {
 
 	 CreateBuffer(); // create VBO for the lines 
    drawScene();	 // draw the VBO 
-      }
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -251,7 +302,16 @@ function drawScene() {
                   console.log('enter b');
                   color_mode = 'b'          
               }
-              break;          
+              break;  
+         case 67:
+              if (event.shiftKey) {
+                  console.log('enter C');          
+              }
+              else {
+                  console.log('enter c');         
+              }
+              clearScreen();
+              break;         
       }
 	console.log('polygon mode =', polygon_mode);
 	console.log('color mode =', color_mode);	
