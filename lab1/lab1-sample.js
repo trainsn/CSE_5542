@@ -24,7 +24,7 @@ var vbo_colors = []; //
 var colors = [];   // store the color mode 
 var shapes = [];   // store the shape mode  
 
-var polygon_mode = 'h';  //default = h line 
+var polygon_mode = 'p';  //default = p 
 var color_mode  = 'r';
 
 var circle_points = 100;
@@ -34,8 +34,7 @@ var circle_points = 100;
 function initGL(canvas) {
     try {
         gl = canvas.getContext("experimental-webgl");
-        gl.canvasWidth = canvas.width;
-        gl.canvasHeight = canvas.height;
+        resize(gl.canvas)
     } catch (e) {
     }
     if (!gl) {
@@ -70,13 +69,13 @@ function CreateBuffer() {
     gl.bindBuffer(gl.ARRAY_BUFFER, VertexPositionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vbo_vertices), gl.STATIC_DRAW);
     VertexPositionBuffer.itemSize = 3;  // NDC'S [x,y,0] 
-    VertexPositionBuffer.numItems = shape_counter*2;// this example only draw lines, so n*2 vertices 
+    VertexPositionBuffer.numItems = point_counter;//
 
     VertexColorBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, VertexColorBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vbo_colors), gl.STATIC_DRAW);
     VertexColorBuffer.itemSize = 4;
-    VertexColorBuffer.numItems = shape_counter*2;
+    VertexColorBuffer.numItems = point_counter;
 }
 ///////////////////////////////////////////////////////////////////////
 
@@ -97,7 +96,6 @@ function drawScene() {
     gl.viewport(vp_minX, vp_minY, vp_width, vp_height); 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    // draw_lines();
     gl.bindBuffer(gl.ARRAY_BUFFER, VertexPositionBuffer);
     gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, VertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
     
@@ -125,10 +123,6 @@ function drawScene() {
             point_cursor += circle_points;
         }
     }
-    // if (polygon_mode == "h" |V|  polygon_modeb == "v")
-    //   gl.drawArrays(gl.LINES, 0, VertexPositionBuffer.numItems);
-    // else 
-    //   gl.drawArrays(gl.POINTS, 0, VertexPositionBuffer.numItems);
 }
 
 function clearScreen() {
@@ -143,6 +137,14 @@ function clearScreen() {
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+}
+
+function redisplayScreen() {
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    CreateBuffer(); // create VBO for the lines 
+    drawScene();  // draw the VBO 
 }
 
 function resize(canvas) {
@@ -422,8 +424,18 @@ function resize(canvas) {
                   console.log('enter c');         
               }
               clearScreen();
-              break;         
+              break;
+         case 68:
+              if (event.shiftKey) {
+                  console.log('enter D');          
+              }
+              else {
+                  console.log('enter d');         
+              }
+              redisplayScreen();
+
+              break;          
       }
 	console.log('polygon mode =', polygon_mode);
 	console.log('color mode =', color_mode);	
-    }
+}
