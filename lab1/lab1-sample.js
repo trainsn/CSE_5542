@@ -112,14 +112,14 @@ function drawScene() {
             gl.drawArrays(gl.POINTS, point_cursor, 1);
             point_cursor += 1;
         } else if (shapes[i] == "t"){
-            gl.drawArrays(gl.LINE_LOOP, point_cursor, 3);
+            gl.drawArrays(gl.TRIANGLE_FAN, point_cursor, 3);
             point_cursor += 3;
         }
         else if (shapes[i] == "q") {
-            gl.drawArrays(gl.LINE_LOOP, point_cursor, 4);
+            gl.drawArrays(gl.TRIANGLE_FAN, point_cursor, 4);
             point_cursor += 4;
         } else if (shapes[i] == 'o'){
-            gl.drawArrays(gl.LINE_LOOP, point_cursor, circle_points);
+            gl.drawArrays(gl.TRIANGLE_FAN, point_cursor, circle_points);
             point_cursor += circle_points;
         }
     }
