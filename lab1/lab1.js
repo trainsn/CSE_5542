@@ -1,9 +1,7 @@
 ///////////////////////////////////////////////////////////////////////
 //
-//     CSE 5542 AU 2019  LAB 1  Sample Code
-//     Han-Wei Shen
-//
-//     In this sample code I show you how to draw h and v lines from mouse clicks 
+//     CSE 5542 AU 2019  LAB 1 
+//     Neng Shi     
 //
 ///////////////////////////////////////////////////////////////////////
 
@@ -114,8 +112,7 @@ function drawScene() {
         } else if (shapes[i] == "t"){
             gl.drawArrays(gl.TRIANGLE_FAN, point_cursor, 3);
             point_cursor += 3;
-        }
-        else if (shapes[i] == "q") {
+        } else if (shapes[i] == "q") {
             gl.drawArrays(gl.TRIANGLE_FAN, point_cursor, 4);
             point_cursor += 4;
         } else if (shapes[i] == 'o'){
