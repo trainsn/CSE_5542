@@ -32,7 +32,7 @@ var circle_points = 100;
 function initGL(canvas) {
     try {
         gl = canvas.getContext("experimental-webgl");
-        resize(gl.canvas)
+        resizeCanvas();
     } catch (e) {
     }
     if (!gl) {
@@ -56,6 +56,8 @@ function webGLStart() {
     
     document.addEventListener('mousedown', onDocumentMouseDown,false);
     document.addEventListener('keydown', onKeyDown, false);
+
+    window.addEventListener('resize', resizeCanvas);
 }
 
 
@@ -79,8 +81,6 @@ function initScene() {
 }
 
 function drawScene() {
-    resize(gl.canvas)
-
     vp_minX = 0; vp_maxX = gl.canvasWidth;  vp_width = vp_maxX- vp_minX+1; 
     vp_minY = 0; vp_maxY = gl.canvasHeight; vp_height = vp_maxY-vp_minY+1; 
     console.log(vp_minX, vp_maxX, vp_minY, vp_maxY); 
@@ -140,20 +140,23 @@ function redisplayScreen() {
     drawScene();  // draw the VBO 
 }
 
-function resize(canvas) {
+function resizeCanvas() {
     //get the canvas display size in the browser  
-    var displayWidth = canvas.clientWidth;
-    var displayHeight = canvas.clientHeight;
+    var displayWidth = gl.canvas.clientWidth;
+    var displayHeight = gl.canvas.clientHeight;
 
     //check whether two sizes are the same 
-    if (canvas.width != displayWidth || canvas.height != displayHeight){
+    if (gl.canvas.width != displayWidth || gl.canvas.height != displayHeight){
         //set canvas size with canvas display size in the browser
-        canvas.width = displayWidth;
-        canvas.height = displayHeight;
+        gl.canvas.width = displayWidth;
+        gl.canvas.height = displayHeight;
 
-        gl.canvasWidth = canvas.width;
-        gl.canvasHeight = canvas.height;
+        gl.canvasWidth = gl.canvas.width;
+        gl.canvasHeight = gl.canvas.height;
     }
+
+    CreateBuffer();
+    redisplayScreen();
 }
 
 

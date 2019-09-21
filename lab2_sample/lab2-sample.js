@@ -179,7 +179,7 @@ var lastMouseX = 0, lastMouseY = 0;
 //   Mouse button handlers 
 //
      function onDocumentMouseMove( event ) {  //update the rotation angle 
-	 var mouseX = event.clientX;
+	       var mouseX = event.clientX;
          var mouseY = event.ClientY; 
 
          var diffX = mouseX - lastMouseX;
@@ -189,9 +189,9 @@ var lastMouseX = 0, lastMouseY = 0;
 	 
          lastMouseX = mouseX;
          lastMouseY = mouseY;
-	 shapes_rotation[shape_counter-1] = Z_angle;   // update the rotation angle 
+	       shapes_rotation[shape_counter-1] = Z_angle;   // update the rotation angle 
 
-	 drawScene();	 // draw the VBO 
+	       drawScene();	 // draw the VBO 
      }
      function onDocumentMouseUp( event ) {
          document.removeEventListener( 'mousemove', onDocumentMouseMove, false );

@@ -34,7 +34,7 @@ var color_mode  = 'r';
 function initGL(canvas) {
     try {
         gl = canvas.getContext("experimental-webgl");
-        resize(gl.canvas)
+        resizeCanvas();
     } catch (e) {
     }
     if (!gl) {
@@ -59,6 +59,8 @@ function webGLStart() {
     
     document.addEventListener('mousedown', onDocumentMouseDown,false);
     document.addEventListener('keydown', onKeyDown, false);
+
+    window.addEventListener('resize', resizeCanvas);
 }
 
 
@@ -122,6 +124,8 @@ function Transform(){
     trans[1] = shapes_ty[cursor];
     trans[2] = 0.0; 
     mvMatrix = mat4.translate(mvMatrix, trans);  // move from origin to mouse click 
+    if (shapes[cursor] == 'v')
+        mvMatrix = mat4.rotate(mvMatrix, degToRad(90.0), [0, 0, 1]);  // rotate if any 
     mvMatrix = mat4.rotate(mvMatrix, degToRad(shapes_rotation[cursor]), [0, 0, 1]);  // rotate if any 
     var scale = [1,1,1];
     scale[0] = scale[1] = scale[2] = shapes_scale[cursor]; 
@@ -175,8 +179,6 @@ function initScene() {
 }
 
 function drawScene() {
-    resize(gl.canvas)
-
     vp_minX = 0; vp_maxX = gl.canvasWidth;  vp_width = vp_maxX- vp_minX+1; 
     vp_minY = 0; vp_maxY = gl.canvasHeight; vp_height = vp_maxY-vp_minY+1; 
     console.log(vp_minX, vp_maxX, vp_minY, vp_maxY); 
@@ -206,9 +208,14 @@ function drawScene() {
 
 function clearScreen() {
     shape_counter = 0;     // shape size counter 
+    cursor = 0;   
 
     colors = [];   // the array used to store color mode 
     shapes = [];   // the array to store what shapes are in the list 
+    shapes_tx = []; // x translation 
+    shapes_ty = []; // y translation 
+    shapes_rotation = []; // rotation angle
+    shapes_scale = [];  // scaling factor (uniform is assumed)
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -221,20 +228,22 @@ function redisplayScreen() {
     drawScene();  // draw the VBO 
 }
 
-function resize(canvas) {
+function resizeCanvas() {
     //get the canvas display size in the browser  
-    var displayWidth = canvas.clientWidth;
-    var displayHeight = canvas.clientHeight;
+    var displayWidth = gl.canvas.clientWidth;
+    var displayHeight = gl.canvas.clientHeight;
 
     //check whether two sizes are the same 
-    if (canvas.width != displayWidth || canvas.height != displayHeight){
+    if (gl.canvas.width != displayWidth || gl.canvas.height != displayHeight){
         //set canvas size with canvas display size in the browser
-        canvas.width = displayWidth;
-        canvas.height = displayHeight;
+        gl.canvas.width = displayWidth;
+        gl.canvas.height = displayHeight;
 
-        gl.canvasWidth = canvas.width;
-        gl.canvasHeight = canvas.height;
+        gl.canvasWidth = gl.canvas.width;
+        gl.canvasHeight = gl.canvas.height;
     }
+
+    redisplayScreen();
 }
 
 
@@ -253,20 +262,26 @@ var lastMouseX = 0, lastMouseY = 0;
     document.addEventListener( 'mouseup', onDocumentMouseUp, false );
     document.addEventListener( 'mouseout', onDocumentMouseOut, false );
 
-    var NDC_X = event.clientX;
-    var NDC_Y = event.clientY;
+    var mouseX = event.clientX;
+    var mouseY = event.clientY;
+
+    lastMouseX = mouseX;
+    lastMouseY = mouseY;
 
     //get canvas' coordinate from the browser client area
     var rect = event.target.getBoundingClientRect();
 
     //tranform the coordinate from client area to canvas, then tranform to webgl
-    NDC_X = ((NDC_X - rect.left) - vp_width/2) / (vp_width/2);
-    NDC_Y = (vp_height/2 - (NDC_Y - rect.top)) / (vp_height/2);
+    NDC_X = ((event.clientX - rect.left) - vp_width/2) / (vp_width/2);
+    NDC_Y = (vp_height/2 - (event.clientY - rect.top)) / (vp_height/2);
     console.log("NDC click", event.clientX, event.clientY, NDC_X, NDC_Y);
     
     shapes.push(polygon_mode);
     colors.push(color_mode); 
-    shapes_tx.push(NDC_X); shapes_ty.push(NDC_Y); shapes_rotation.push(0.0); shapes_scale.push(1.0);
+    shapes_tx.push(NDC_X); 
+    shapes_ty.push(NDC_Y); 
+    shapes_rotation.push(0.0); 
+    shapes_scale.push(1.0);
     
     Z_angle = 0.0;
     shape_counter++; 
@@ -285,6 +300,17 @@ var lastMouseX = 0, lastMouseY = 0;
      function onDocumentMouseMove( event ) {
          var mouseX = event.clientX;
          var mouseY = event.ClientY;
+
+         var diffX = mouseX - lastMouseX;
+         var diffY = mouseY - lastMouseY;
+
+         Z_angle = Z_angle + diffX/5;
+
+         lastMouseX = mouseX;
+         lastMouseY = mouseY;
+         shapes_rotation[shape_counter-1] = Z_angle; //update the rotation angle
+
+         drawScene();
      }
 
      function onDocumentMouseUp( event ) {
@@ -404,7 +430,18 @@ var lastMouseX = 0, lastMouseY = 0;
                   console.log('enter d');         
               }
               redisplayScreen();
-              break;          
+              break;   
+         case 83: 
+              if (event.shiftKey) {
+                  console.log('enter S');
+                  shapes_scale[shape_counter-1] *= 1.1; 
+              }    
+              else {
+                  console.log('enter s');
+                  shapes_scale[shape_counter-1] *= 0.9;
+              }
+              drawScene();
+              break;
       }
 	console.log('polygon mode =', polygon_mode);
 	console.log('color mode =', color_mode);	
