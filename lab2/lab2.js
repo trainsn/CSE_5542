@@ -11,7 +11,10 @@ var shaderProgram;  // the shader program
 //viewport info 
 var vp_minX, vp_maxX, vp_minY, vp_maxY, vp_width, vp_height; 
 
-var VertexPositionBuffer;
+var PointVertexPositionBuffer;
+var LineVertexPositionBuffer;
+var TriangleVertexPositionBuffer;
+var SquareVertexPositionBuffer;
 
 var shape_counter = 0;     // shape size counter 
 var point_counter = 0;     // point size counter 
@@ -20,12 +23,14 @@ var old_point_counter = 0;  // point_counter - old_point_counter = how many poin
 var vbo_vertices = [];  //
 var vbo_colors = []; //
 var colors = [];   // store the color mode 
-var shapes = [];   // store the shape mode  
+var shapes = [];   // store the shape mode 
+var shapes_tx = []; // x translation 
+var shapes_ty = []; // y translation 
+var shapes_rotation = []; // rotation angle
+var shapes_scale = [];  // scaling factor (uniform is assumed)
 
 var polygon_mode = 'p';  //default = p 
 var color_mode  = 'r';
-
-var circle_points = 100;
 
 //////////// Init OpenGL Context etc. ///////////////
 
@@ -43,15 +48,14 @@ function initGL(canvas) {
 ///////////////////////////////////////////////////////////////
 
 function webGLStart() {
-    var canvas = document.getElementById("lab1-canvas");
+    var canvas = document.getElementById("lab2-canvas");
     initGL(canvas);
     initShaders();
     shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
     gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
 
-    // shaderProgram.vertexColorAttribute = gl.getAttribLocation(shaderProgram, "aVertexColor");
+    shaderProgram.vertexColorAttribute = gl.getAttribLocation(shaderProgram, "aVertexColor");
     gl.enableVertexAttribArray(shaderProgram.vertexColorAttribute);
-    shaderProgram.vColorLocation = gl.getUniformLocation(shaderProgram, "vColor");
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     initScene();
@@ -64,11 +68,21 @@ function webGLStart() {
 ///////////////////////////////////////////////////////////
 ///////               Create VBO          /////////////////
 function CreateBuffer() {
-    VertexPositionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, VertexPositionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vbo_vertices), gl.STATIC_DRAW);
-    VertexPositionBuffer.itemSize = 3;  // NDC'S [x,y,0] 
-    VertexPositionBuffer.numItems = point_counter;//
+    var point_vertices = [
+            0.0, 0.0,  0.0
+        ];
+    PointVertexPositionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, PointVertexPositionBuffer);
+    
+    var line_vertices  = [         // A VBO for horizontal line in a standard position. To be translated to position of mouse click 
+             -0.1, 0.0,  0.0,
+             0.1, 0.0,  0.0
+        ];
+    LineVertexPositionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, LineVertexPositionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(line_vertices), gl.STATIC_DRAW);
+    LineVertexPositionBuffer.itemSize = 3;  // NDC'S [x,y,0] 
+    LineVertexPositionBuffer.numItems = 2;  //
 
     VertexColorBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, VertexColorBuffer);
@@ -97,36 +111,26 @@ function drawScene() {
 
     gl.bindBuffer(gl.ARRAY_BUFFER, VertexPositionBuffer);
     gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, VertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    
+    gl.bindBuffer(gl.ARRAY_BUFFER, VertexColorBuffer);
+    gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, VertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     var i;
     var point_cursor = 0;
     for (i = 0; i < shape_counter; i++){
         if (shapes[i] == "h" ||  shapes[i] == "v"){
-            gl.uniform4f(shaderProgram.vColorLocation, 
-              vbo_colors[point_cursor*4], vbo_colors[point_cursor*4+1], vbo_colors[point_cursor*4+2], vbo_colors[point_cursor*4+3]);
             gl.drawArrays(gl.LINES, point_cursor, 2);
             point_cursor += 2;
         } else if (shapes[i] == "p") {
-            gl.uniform4f(shaderProgram.vColorLocation, 
-              vbo_colors[point_cursor*4], vbo_colors[point_cursor*4+1], vbo_colors[point_cursor*4+2], vbo_colors[point_cursor*4+3]);
             gl.drawArrays(gl.POINTS, point_cursor, 1);
             point_cursor += 1;
         } else if (shapes[i] == "t"){
-            gl.uniform4f(shaderProgram.vColorLocation, 
-              vbo_colors[point_cursor*4], vbo_colors[point_cursor*4+1], vbo_colors[point_cursor*4+2], vbo_colors[point_cursor*4+3]);
             gl.drawArrays(gl.TRIANGLE_FAN, point_cursor, 3);
             point_cursor += 3;
         } else if (shapes[i] == "q") {
-            gl.uniform4f(shaderProgram.vColorLocation, 
-              vbo_colors[point_cursor*4], vbo_colors[point_cursor*4+1], vbo_colors[point_cursor*4+2], vbo_colors[point_cursor*4+3]);
             gl.drawArrays(gl.TRIANGLE_FAN, point_cursor, 4);
             point_cursor += 4;
-        } else if (shapes[i] == 'o'){
-            gl.uniform4f(shaderProgram.vColorLocation, 
-              vbo_colors[point_cursor*4], vbo_colors[point_cursor*4+1], vbo_colors[point_cursor*4+2], vbo_colors[point_cursor*4+3]);
-            gl.drawArrays(gl.TRIANGLE_FAN, point_cursor, circle_points);
-            point_cursor += circle_points;
-        }
+        } 
     }
 }
 
@@ -253,20 +257,6 @@ function resize(canvas) {
 
        point_counter += 4;
    } 
-   else if (polygon_mode == 'o'){ 
-       var r = 0.05;
-
-       for (var i = 0; i < circle_points; i++){
-          theta = i / circle_points * 2 * Math.PI;
-          var x = r * Math.sin(theta);
-          var y = r * Math.cos(theta);
-          vbo_vertices.push(NDC_X+x);
-          vbo_vertices.push(NDC_Y+y);
-          vbo_vertices.push(0.0); 
-       }
-
-       point_counter += circle_points;
-   }
 
    var i;
    for (i = old_point_counter; i < point_counter; i++){
@@ -378,16 +368,6 @@ function resize(canvas) {
               else {
                   console.log('enter q');
                   polygon_mode = 'q'      
-              }
-              break;  
-         case 79: 
-              if (event.shiftKey) {
-                  console.log('enter O'); 
-                  polygon_mode = 'o' 
-              }
-              else {
-                  console.log('enter o');
-                  polygon_mode = 'o'      
               }
               break;       
          case 82:

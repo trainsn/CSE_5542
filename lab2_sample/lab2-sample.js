@@ -17,7 +17,7 @@ var vp_minX, vp_maxX, vp_minY, vp_maxY, vp_width, vp_height;
 
 var LineVertexPositionBuffer;
 
-var shape_size = 0;     // shape size counter 
+var shape_counter = 0;     // shape size counter 
 
 var colors = [];   // I am not doing colors, but you should :-) 
 var shapes = [];   // the array to store what shapes are in the list
@@ -70,7 +70,7 @@ function webGLStart() {
 function CreateBuffer() {
     var line_vertices = [         // A VBO for horizontal line in a standard position. To be translated to position of mouse click 
              -0.1, 0.0,  0.0,
-	      0.1, 0.0,  0.0
+	           0.1, 0.0,  0.0
         ];
     LineVertexPositionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, LineVertexPositionBuffer);
@@ -80,11 +80,6 @@ function CreateBuffer() {
 }
 
 ///////////////////////////////////////////////////////
-
-function setMatrixUniforms() {
-    gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
-}
-
 function degToRad(degrees) {
     return degrees * Math.PI / 180;
 }
@@ -97,20 +92,20 @@ function draw_lines() {   // lab1 sample - draw lines only
     gl.bindBuffer(gl.ARRAY_BUFFER, LineVertexPositionBuffer);    // make the line current buffer 
     gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, LineVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-    for (var i=0; i<shape_size; i++){  // draw the line vbo buffer multiple times, one with a new transformation specified by mouse click 
-	mat4.identity(mvMatrix);
-	var trans = [0,0,0];
-	trans[0] = shapes_tx[i]; 
-	trans[1] = shapes_ty[i];
-	trans[2] = 0.0; 
-	vmMatrix = mat4.translate(mvMatrix, trans);  // move from origin to mouse click 
-	mvMatrix = mat4.rotate(mvMatrix, degToRad(shapes_rotation[i]), [0, 0, 1]);  // rotate if any 
-	var scale = [1,1,1];
-	scale[0] = scale[1] = scale[2] = shapes_scale[i]; 
-	mvMatrix = mat4.scale(mvMatrix, scale);  // scale if any 
-	
-	setMatrixUniforms();   // pass the matrix to the vertex shader 
-	gl.drawArrays(gl.LINES, 0, LineVertexPositionBuffer.numItems);
+    for (var i=0; i<shape_counter; i++){  // draw the line vbo buffer multiple times, one with a new transformation specified by mouse click 
+      	mat4.identity(mvMatrix);
+      	var trans = [0,0,0];
+      	trans[0] = shapes_tx[i]; 
+      	trans[1] = shapes_ty[i];
+      	trans[2] = 0.0; 
+      	vmMatrix = mat4.translate(mvMatrix, trans);  // move from origin to mouse click 
+      	mvMatrix = mat4.rotate(mvMatrix, degToRad(shapes_rotation[i]), [0, 0, 1]);  // rotate if any 
+      	var scale = [1,1,1];
+      	scale[0] = scale[1] = scale[2] = shapes_scale[i]; 
+      	mvMatrix = mat4.scale(mvMatrix, scale);  // scale if any 
+      	
+        gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix); 
+      	gl.drawArrays(gl.LINES, 0, LineVertexPositionBuffer.numItems);
     }
 }
 
@@ -154,7 +149,7 @@ var lastMouseX = 0, lastMouseY = 0;
          document.addEventListener( 'mouseup', onDocumentMouseUp, false );
          document.addEventListener( 'mouseout', onDocumentMouseOut, false );
 
-	 var mouseX = event.clientX;
+	       var mouseX = event.clientX;
          var mouseY = event.ClientY; 
 	 
          lastMouseX = mouseX;
@@ -170,9 +165,9 @@ var lastMouseX = 0, lastMouseY = 0;
 	 shapes_tx.push(NDC_X); shapes_ty.push(NDC_Y); shapes_rotation.push(0.0); shapes_scale.push(1.0);
 	 
 	 Z_angle = 0.0;
-	 shape_size++;
+	 shape_counter++;
 
-	 console.log("size=", shape_size);
+	 console.log("size=", shape_counter);
 	 console.log("shape = ", polygon_mode);
 	 
          drawScene();	 // draw the VBO 
@@ -194,7 +189,7 @@ var lastMouseX = 0, lastMouseY = 0;
 	 
          lastMouseX = mouseX;
          lastMouseY = mouseY;
-	 shapes_rotation[shape_size-1] = Z_angle;   // update the rotation angle 
+	 shapes_rotation[shape_counter-1] = Z_angle;   // update the rotation angle 
 
 	 drawScene();	 // draw the VBO 
      }
@@ -271,11 +266,11 @@ var lastMouseX = 0, lastMouseY = 0;
           case 83:
               if (event.shiftKey) {
                   console.log('enter S');
-		  shapes_scale[shape_size-1]*=1.1; 			  	  
+		  shapes_scale[shape_counter-1]*=1.1; 			  	  
               }
               else {
 		  console.log('enter s');
-		  shapes_scale[shape_size-1]*=0.9; 			  	  		  
+		  shapes_scale[shape_counter-1]*=0.9; 			  	  		  
               }
           break;
 	  
