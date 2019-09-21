@@ -98,7 +98,7 @@ function draw_lines() {   // lab1 sample - draw lines only
       	trans[0] = shapes_tx[i]; 
       	trans[1] = shapes_ty[i];
       	trans[2] = 0.0; 
-      	vmMatrix = mat4.translate(mvMatrix, trans);  // move from origin to mouse click 
+      	mvMatrix = mat4.translate(mvMatrix, trans);  // move from origin to mouse click 
       	mvMatrix = mat4.rotate(mvMatrix, degToRad(shapes_rotation[i]), [0, 0, 1]);  // rotate if any 
       	var scale = [1,1,1];
       	scale[0] = scale[1] = scale[2] = shapes_scale[i]; 
@@ -156,19 +156,19 @@ var lastMouseX = 0, lastMouseY = 0;
          lastMouseY = mouseY;
 	 
 	 
-	 var NDC_X = (event.clientX - vp_minX)/vp_width*2 -1; 
-	 var NDC_Y = ((vp_height-event.clientY) - vp_minY)/vp_height*2 - 1 ;
-	 console.log("NDC click", event.clientX, event.clientY, NDC_X, NDC_Y);
+      	 var NDC_X = (event.clientX - vp_minX)/vp_width*2 -1; 
+      	 var NDC_Y = ((vp_height-event.clientY) - vp_minY)/vp_height*2 - 1 ;
+      	 console.log("NDC click", event.clientX, event.clientY, NDC_X, NDC_Y);
 
-	 shapes.push(polygon_mode);
-	 colors.push(color_mode);
-	 shapes_tx.push(NDC_X); shapes_ty.push(NDC_Y); shapes_rotation.push(0.0); shapes_scale.push(1.0);
-	 
-	 Z_angle = 0.0;
-	 shape_counter++;
+      	 shapes.push(polygon_mode);
+      	 colors.push(color_mode);
+      	 shapes_tx.push(NDC_X); shapes_ty.push(NDC_Y); shapes_rotation.push(0.0); shapes_scale.push(1.0);
+      	 
+      	 Z_angle = 0.0;
+      	 shape_counter++;
 
-	 console.log("size=", shape_counter);
-	 console.log("shape = ", polygon_mode);
+      	 console.log("size=", shape_counter);
+      	 console.log("shape = ", polygon_mode);
 	 
          drawScene();	 // draw the VBO 
       }

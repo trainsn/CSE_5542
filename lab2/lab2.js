@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 //
-//     CSE 5542 AU 2019  LAB 1 
+//     CSE 5542 AU 2019  LAB 2 
 //     Neng Shi     
 //
 ///////////////////////////////////////////////////////////////////////
@@ -17,11 +17,8 @@ var TriangleVertexPositionBuffer;
 var SquareVertexPositionBuffer;
 
 var shape_counter = 0;     // shape size counter 
-var point_counter = 0;     // point size counter 
-var old_point_counter = 0;  // point_counter - old_point_counter = how many points in this run
+var cursor = 0;   
 
-var vbo_vertices = [];  //
-var vbo_colors = []; //
 var colors = [];   // store the color mode 
 var shapes = [];   // store the shape mode 
 var shapes_tx = []; // x translation 
@@ -29,7 +26,7 @@ var shapes_ty = []; // y translation
 var shapes_rotation = []; // rotation angle
 var shapes_scale = [];  // scaling factor (uniform is assumed)
 
-var polygon_mode = 'p';  //default = p 
+var polygon_mode = 'h';  //default = h
 var color_mode  = 'r';
 
 //////////// Init OpenGL Context etc. ///////////////
@@ -54,6 +51,7 @@ function webGLStart() {
     shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
     gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
 
+    shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
     shaderProgram.vColorLocation = gl.getUniformLocation(shaderProgram, "vColor");
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -72,6 +70,8 @@ function CreateBuffer() {
         ];
     PointVertexPositionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, PointVertexPositionBuffer);
+    PointVertexPositionBuffer.itemSize = 3;
+    PointVertexPositionBuffer.numItems = 1;
 
     var line_vertices  = [         // A VBO for horizontal line in a standard position. To be translated to position of mouse click 
              -0.1, 0.0,  0.0,
@@ -83,12 +83,85 @@ function CreateBuffer() {
     LineVertexPositionBuffer.itemSize = 3;  // NDC'S [x,y,0] 
     LineVertexPositionBuffer.numItems = 2;  //
 
-    VertexColorBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, VertexColorBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vbo_colors), gl.STATIC_DRAW);
-    VertexColorBuffer.itemSize = 4;
-    VertexColorBuffer.numItems = point_counter;
+    var triangle_vertices = [
+          0.0, -0.05, 0.0,
+          0.05*Math.sqrt(3)/2, 0.05/2, 0.0,
+          -0.05*Math.sqrt(3)/2, 0.05/2, 0.0 
+    ];
+    TriangleVertexPositionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, TriangleVertexPositionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(triangle_vertices), gl.STATIC_DRAW);
+    TriangleVertexPositionBuffer.itemSize = 3;
+    TriangleVertexPositionBuffer.numItems = 3;
+
+
+    var square_vertices = [
+          -0.05, -0.05, 0.0,
+          0.05, -0.05, 0.0,
+          0.05, 0.05, 0.0,
+          -0.05, 0.05, 0.0
+    ];
+    SquareVertexPositionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, SquareVertexPositionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(square_vertices), gl.STATIC_DRAW);
+    SquareVertexPositionBuffer.itemSize = 3;
+    SquareVertexPositionBuffer.numItems = 4;
 }
+
+///////////////////////////////////////////////////////
+function degToRad(degrees) {
+    return degrees * Math.PI / 180;
+}
+
+///////////////////////////////////////////////////////////////////////
+var mvMatrix = mat4.create();   // this is the matrix for transforming each shape before draw 
+function Transform(){
+    mat4.identity(mvMatrix);
+    var trans = [0,0,0];
+    trans[0] = shapes_tx[cursor]; 
+    trans[1] = shapes_ty[cursor];
+    trans[2] = 0.0; 
+    mvMatrix = mat4.translate(mvMatrix, trans);  // move from origin to mouse click 
+    mvMatrix = mat4.rotate(mvMatrix, degToRad(shapes_rotation[cursor]), [0, 0, 1]);  // rotate if any 
+    var scale = [1,1,1];
+    scale[0] = scale[1] = scale[2] = shapes_scale[cursor]; 
+    mvMatrix = mat4.scale(mvMatrix, scale);  // scale if any 
+
+    gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix); 
+}
+
+function draw_points(){
+    gl.bindBuffer(gl.ARRAY_BUFFER, PointVertexPositionBuffer);    // make the line current buffer 
+    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, PointVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    Transform();
+    gl.drawArrays(gl.POINTS, 0, PointVertexPositionBuffer.numItems);
+}
+
+function draw_lines() {   
+    gl.bindBuffer(gl.ARRAY_BUFFER, LineVertexPositionBuffer);    // make the line current buffer 
+    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, LineVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    Transform();
+    gl.drawArrays(gl.LINES, 0, LineVertexPositionBuffer.numItems);
+}
+
+function draw_triangles(){
+    gl.bindBuffer(gl.ARRAY_BUFFER, TriangleVertexPositionBuffer);    // make the line current buffer 
+    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, LineVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    Transform();
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, TriangleVertexPositionBuffer.numItems);
+}
+
+function draw_squares(){
+    gl.bindBuffer(gl.ARRAY_BUFFER, SquareVertexPositionBuffer);    // make the line current buffer 
+    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, LineVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    Transform();
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, SquareVertexPositionBuffer.numItems);
+}
+
 ///////////////////////////////////////////////////////////////////////
 
 function initScene() {
@@ -97,6 +170,8 @@ function initScene() {
     console.log(vp_minX, vp_maxX, vp_minY, vp_maxY); 
     gl.viewport(vp_minX, vp_minY, vp_width, vp_height); 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    CreateBuffer();
 }
 
 function drawScene() {
@@ -108,38 +183,30 @@ function drawScene() {
     gl.viewport(vp_minX, vp_minY, vp_width, vp_height); 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, VertexPositionBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, VertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
-    
-    gl.bindBuffer(gl.ARRAY_BUFFER, VertexColorBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, VertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    for (cursor=0; cursor < shape_counter; cursor++){
+        if (colors[cursor] == "r"){
+            gl.uniform4f(shaderProgram.vColorLocation, 1.0, 0.0, 0.0, 1.0);
+        } else if (colors[cursor] == "g"){
+            gl.uniform4f(shaderProgram.vColorLocation, 0.0, 1.0, 0.0, 1.0);
+        } else if (colors[cursor] == "b"){
+            gl.uniform4f(shaderProgram.vColorLocation, 0.0, 0.0, 1.0, 1.0);
+        }
 
-    var i;
-    var point_cursor = 0;
-    for (i = 0; i < shape_counter; i++){
-        if (shapes[i] == "h" ||  shapes[i] == "v"){
-            gl.drawArrays(gl.LINES, point_cursor, 2);
-            point_cursor += 2;
-        } else if (shapes[i] == "p") {
-            gl.drawArrays(gl.POINTS, point_cursor, 1);
-            point_cursor += 1;
-        } else if (shapes[i] == "t"){
-            gl.drawArrays(gl.TRIANGLE_FAN, point_cursor, 3);
-            point_cursor += 3;
-        } else if (shapes[i] == "q") {
-            gl.drawArrays(gl.TRIANGLE_FAN, point_cursor, 4);
-            point_cursor += 4;
-        } 
+        if (shapes[cursor] == 'p')
+            draw_points();
+        else if (shapes[cursor] == 'h' || shapes[cursor] == 'v')
+            draw_lines();
+        else if (shapes[cursor] == 't')
+            draw_triangles();
+        else if (shapes[cursor] == 'q')
+            draw_squares();
     }
+    
 }
 
 function clearScreen() {
     shape_counter = 0;     // shape size counter 
-    point_counter = 0;     // point size counter 
-    old_point_counter = 0;  // point_counter - old_point_counter = how many points in this run
 
-    vbo_vertices = [];  // 
-    vbo_colors = []; //
     colors = [];   // the array used to store color mode 
     shapes = [];   // the array to store what shapes are in the list 
 
@@ -172,6 +239,11 @@ function resize(canvas) {
 
 
 ///////////////////////////////////////////////////////////////
+//   Below are mouse and key event handlers 
+//
+
+var Z_angle = 0.0;
+var lastMouseX = 0, lastMouseY = 0;
 
 ///////////////////////////////////////////////////////////////
 
@@ -190,102 +262,18 @@ function resize(canvas) {
     //tranform the coordinate from client area to canvas, then tranform to webgl
     NDC_X = ((NDC_X - rect.left) - vp_width/2) / (vp_width/2);
     NDC_Y = (vp_height/2 - (NDC_Y - rect.top)) / (vp_height/2);
-
-	 console.log("NDC click", event.clientX, event.clientY, NDC_X, NDC_Y);
-
-   if (polygon_mode == 'p'){        // add one point of p point
-        vbo_vertices.push(NDC_X);
-        vbo_vertices.push(NDC_Y);
-        vbo_vertices.push(0.0);
-
-        point_counter++;
-   }
-   if (polygon_mode == 'h' ) {       // add two points of h line
-       vbo_vertices.push(NDC_X-0.1);
-       vbo_vertices.push(NDC_Y);
-       vbo_vertices.push(0.0);
-
-       vbo_vertices.push(NDC_X+0.1);
-       vbo_vertices.push(NDC_Y);
-       vbo_vertices.push(0.0);
-
-       point_counter += 2;
-   }
-   else if (polygon_mode == 'v' ) {  // add two end points of the v line 
-       vbo_vertices.push(NDC_X);
-       vbo_vertices.push(NDC_Y-0.1);
-       vbo_vertices.push(0.0);
-
-       vbo_vertices.push(NDC_X);
-       vbo_vertices.push(NDC_Y+0.1);
-       vbo_vertices.push(0.0);
-
-       point_counter += 2;
-   } 
-   else if (polygon_mode == 't') { // add three points of the triangles 
-       vbo_vertices.push(NDC_X);
-       vbo_vertices.push(NDC_Y-0.05);
-       vbo_vertices.push(0.0);
-
-       vbo_vertices.push(NDC_X+0.05*Math.sqrt(3)/2);
-       vbo_vertices.push(NDC_Y+0.05/2);
-       vbo_vertices.push(0.0); 
-
-       vbo_vertices.push(NDC_X-0.05*Math.sqrt(3)/2);
-       vbo_vertices.push(NDC_Y+0.05/2);
-       vbo_vertices.push(0.0); 
-
-       point_counter += 3;
-   } 
-   else if (polygon_mode == 'q' ) { // add four points of the squares
-       vbo_vertices.push(NDC_X-0.05);
-       vbo_vertices.push(NDC_Y-0.05);
-       vbo_vertices.push(0.0); 
-
-       vbo_vertices.push(NDC_X+0.05);
-       vbo_vertices.push(NDC_Y-0.05);
-       vbo_vertices.push(0.0); 
-
-       vbo_vertices.push(NDC_X+0.05);
-       vbo_vertices.push(NDC_Y+0.05);
-       vbo_vertices.push(0.0); 
-
-       vbo_vertices.push(NDC_X-0.05);
-       vbo_vertices.push(NDC_Y+0.05);
-       vbo_vertices.push(0.0); 
-
-       point_counter += 4;
-   } 
-
-   var i;
-   for (i = old_point_counter; i < point_counter; i++){
-      if (color_mode == 'r'){
-          vbo_colors.push(1.0);
-          vbo_colors.push(0.0);
-          vbo_colors.push(0.0);
-          vbo_colors.push(1.0);
-      } else if (color_mode == 'g'){
-          vbo_colors.push(0.0);
-          vbo_colors.push(1.0);
-          vbo_colors.push(0.0);
-          vbo_colors.push(1.0);
-      } else if (color_mode == 'b'){
-          vbo_colors.push(0.0);
-          vbo_colors.push(0.0);
-          vbo_colors.push(1.0);
-          vbo_colors.push(1.0);
-      }
-   }
-   old_point_counter = point_counter;
-	 
-	 shapes.push(polygon_mode);
-	 colors.push(color_mode); 
-	 shape_counter++; 
-	 console.log("size=", shape_counter);
-	 console.log("shape = ", polygon_mode);
-
-	 CreateBuffer(); // create VBO for the lines 
-   drawScene();	 // draw the VBO 
+    console.log("NDC click", event.clientX, event.clientY, NDC_X, NDC_Y);
+    
+    shapes.push(polygon_mode);
+    colors.push(color_mode); 
+    shapes_tx.push(NDC_X); shapes_ty.push(NDC_Y); shapes_rotation.push(0.0); shapes_scale.push(1.0);
+    
+    Z_angle = 0.0;
+    shape_counter++; 
+    
+    console.log("size=", shape_counter);
+    console.log("shape = ", polygon_mode);
+    drawScene();	 // draw the VBO 
 }
 
 
