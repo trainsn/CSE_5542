@@ -54,8 +54,7 @@ function webGLStart() {
     shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
     gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
 
-    shaderProgram.vertexColorAttribute = gl.getAttribLocation(shaderProgram, "aVertexColor");
-    gl.enableVertexAttribArray(shaderProgram.vertexColorAttribute);
+    shaderProgram.vColorLocation = gl.getUniformLocation(shaderProgram, "vColor");
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     initScene();
@@ -73,7 +72,7 @@ function CreateBuffer() {
         ];
     PointVertexPositionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, PointVertexPositionBuffer);
-    
+
     var line_vertices  = [         // A VBO for horizontal line in a standard position. To be translated to position of mouse click 
              -0.1, 0.0,  0.0,
              0.1, 0.0,  0.0

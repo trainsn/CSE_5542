@@ -12,7 +12,7 @@
 <!--  ************** Fragment Shader ************* --> 
 <script id="shader-fs" type="x-shader/x-fragment">
     precision mediump float;
-    varying vec4 vColor; 
+    uniform vec4 vColor; 
 
     void main(void) {
             gl_FragColor = vColor; 
@@ -22,14 +22,11 @@
 <!--  ************** Vertex Shader ************* --> 
 <script id="shader-vs" type="x-shader/x-vertex">
     attribute vec3 aVertexPosition;
-    uniform mat4 uMVMatrix;
-    attribute vec4 aVertexColor;
-    varying vec4 vColor; 
+    uniform mat4 uMVMatrix; 
 
     void main(void) {
       gl_Position = vec4(aVertexPosition, 1.0);
       gl_PointSize = 10.0;
-      vColor= aVertexColor; 
     }
 </script>
 

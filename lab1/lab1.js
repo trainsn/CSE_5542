@@ -49,8 +49,6 @@ function webGLStart() {
     shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
     gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
 
-    // shaderProgram.vertexColorAttribute = gl.getAttribLocation(shaderProgram, "aVertexColor");
-    gl.enableVertexAttribArray(shaderProgram.vertexColorAttribute);
     shaderProgram.vColorLocation = gl.getUniformLocation(shaderProgram, "vColor");
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -69,12 +67,6 @@ function CreateBuffer() {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vbo_vertices), gl.STATIC_DRAW);
     VertexPositionBuffer.itemSize = 3;  // NDC'S [x,y,0] 
     VertexPositionBuffer.numItems = point_counter;//
-
-    VertexColorBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, VertexColorBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vbo_colors), gl.STATIC_DRAW);
-    VertexColorBuffer.itemSize = 4;
-    VertexColorBuffer.numItems = point_counter;
 }
 ///////////////////////////////////////////////////////////////////////
 
@@ -101,29 +93,26 @@ function drawScene() {
     var i;
     var point_cursor = 0;
     for (i = 0; i < shape_counter; i++){
+        if (colors[i] == "r"){
+            gl.uniform4f(shaderProgram.vColorLocation, 1.0, 0.0, 0.0, 1.0);
+        } else if (colors[i] == "g"){
+            gl.uniform4f(shaderProgram.vColorLocation, 0.0, 1.0, 0.0, 1.0);
+        } else if (colors[i] == "b"){
+            gl.uniform4f(shaderProgram.vColorLocation, 0.0, 0.0, 1.0, 1.0);
+        }
         if (shapes[i] == "h" ||  shapes[i] == "v"){
-            gl.uniform4f(shaderProgram.vColorLocation, 
-              vbo_colors[point_cursor*4], vbo_colors[point_cursor*4+1], vbo_colors[point_cursor*4+2], vbo_colors[point_cursor*4+3]);
             gl.drawArrays(gl.LINES, point_cursor, 2);
             point_cursor += 2;
         } else if (shapes[i] == "p") {
-            gl.uniform4f(shaderProgram.vColorLocation, 
-              vbo_colors[point_cursor*4], vbo_colors[point_cursor*4+1], vbo_colors[point_cursor*4+2], vbo_colors[point_cursor*4+3]);
             gl.drawArrays(gl.POINTS, point_cursor, 1);
             point_cursor += 1;
         } else if (shapes[i] == "t"){
-            gl.uniform4f(shaderProgram.vColorLocation, 
-              vbo_colors[point_cursor*4], vbo_colors[point_cursor*4+1], vbo_colors[point_cursor*4+2], vbo_colors[point_cursor*4+3]);
             gl.drawArrays(gl.TRIANGLE_FAN, point_cursor, 3);
             point_cursor += 3;
         } else if (shapes[i] == "q") {
-            gl.uniform4f(shaderProgram.vColorLocation, 
-              vbo_colors[point_cursor*4], vbo_colors[point_cursor*4+1], vbo_colors[point_cursor*4+2], vbo_colors[point_cursor*4+3]);
             gl.drawArrays(gl.TRIANGLE_FAN, point_cursor, 4);
             point_cursor += 4;
         } else if (shapes[i] == 'o'){
-            gl.uniform4f(shaderProgram.vColorLocation, 
-              vbo_colors[point_cursor*4], vbo_colors[point_cursor*4+1], vbo_colors[point_cursor*4+2], vbo_colors[point_cursor*4+3]);
             gl.drawArrays(gl.TRIANGLE_FAN, point_cursor, circle_points);
             point_cursor += circle_points;
         }
