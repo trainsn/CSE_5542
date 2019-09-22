@@ -21,13 +21,11 @@ var cursor = 0;
 
 var colors = [];   // store the color mode 
 var shapes = [];   // store the shape mode 
-var shapes_tx = []; // x translation 
-var shapes_ty = []; // y translation 
-var shapes_rotation = []; // rotation angle
-var shapes_scale = [];  // scaling factor (uniform is assumed)
+var transformation_matrices = [];  //store the transformation matrix for each shape 
 
 var polygon_mode = 'h';  //default = h
 var color_mode  = 'r';
+var transformation_mode = 0;  //0: transformation on the last shape, 1: global transformation, 2: transformation on the selected shape 
 
 //////////// Init OpenGL Context etc. ///////////////
 
@@ -116,22 +114,8 @@ function degToRad(degrees) {
 }
 
 ///////////////////////////////////////////////////////////////////////
-var mvMatrix = mat4.create();   // this is the matrix for transforming each shape before draw 
 function Transform(){
-    mat4.identity(mvMatrix);
-    var trans = [0,0,0];
-    trans[0] = shapes_tx[cursor]; 
-    trans[1] = shapes_ty[cursor];
-    trans[2] = 0.0; 
-    mvMatrix = mat4.translate(mvMatrix, trans);  // move from origin to mouse click 
-    if (shapes[cursor] == 'v')
-        mvMatrix = mat4.rotate(mvMatrix, degToRad(90.0), [0, 0, 1]);  // rotate if any 
-    mvMatrix = mat4.rotate(mvMatrix, degToRad(shapes_rotation[cursor]), [0, 0, 1]);  // rotate if any 
-    var scale = [1,1,1];
-    scale[0] = scale[1] = scale[2] = shapes_scale[cursor]; 
-    mvMatrix = mat4.scale(mvMatrix, scale);  // scale if any 
-
-    gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix); 
+    gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, transformation_matrices[cursor]); 
 }
 
 function draw_points(){
@@ -212,10 +196,7 @@ function clearScreen() {
 
     colors = [];   // the array used to store color mode 
     shapes = [];   // the array to store what shapes are in the list 
-    shapes_tx = []; // x translation 
-    shapes_ty = []; // y translation 
-    shapes_rotation = []; // rotation angle
-    shapes_scale = [];  // scaling factor (uniform is assumed)
+    transformation_matrices = [];
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -250,8 +231,6 @@ function resizeCanvas() {
 ///////////////////////////////////////////////////////////////
 //   Below are mouse and key event handlers 
 //
-
-var Z_angle = 0.0;
 var lastMouseX = 0, lastMouseY = 0;
 
 ///////////////////////////////////////////////////////////////
@@ -268,30 +247,37 @@ var lastMouseX = 0, lastMouseY = 0;
     lastMouseX = mouseX;
     lastMouseY = mouseY;
 
-    //get canvas' coordinate from the browser client area
-    var rect = event.target.getBoundingClientRect();
+    if (transformation_mode == 0){
+      //get canvas' coordinate from the browser client area
+      var rect = event.target.getBoundingClientRect();
 
-    //tranform the coordinate from client area to canvas, then tranform to webgl
-    NDC_X = ((event.clientX - rect.left) - vp_width/2) / (vp_width/2);
-    NDC_Y = (vp_height/2 - (event.clientY - rect.top)) / (vp_height/2);
-    console.log("NDC click", event.clientX, event.clientY, NDC_X, NDC_Y);
-    
-    shapes.push(polygon_mode);
-    colors.push(color_mode); 
-    shapes_tx.push(NDC_X); 
-    shapes_ty.push(NDC_Y); 
-    shapes_rotation.push(0.0); 
-    shapes_scale.push(1.0);
-    
-    Z_angle = 0.0;
-    shape_counter++; 
-    
-    console.log("size=", shape_counter);
-    console.log("shape = ", polygon_mode);
-    drawScene();	 // draw the VBO 
+      //tranform the coordinate from client area to canvas, then tranform to webgl
+      NDC_X = ((event.clientX - rect.left) - vp_width/2) / (vp_width/2);
+      NDC_Y = (vp_height/2 - (event.clientY - rect.top)) / (vp_height/2);
+      console.log("NDC click", event.clientX, event.clientY, NDC_X, NDC_Y);
+      
+      shapes.push(polygon_mode);
+      colors.push(color_mode); 
+
+      var mvMatrix = mat4.create();   // this is the matrix for transforming each shape before draw 
+      mat4.identity(mvMatrix);
+      var trans = [0,0,0];
+      trans[0] = NDC_X; 
+      trans[1] = NDC_Y;
+      trans[2] = 0.0; 
+      mvMatrix = mat4.translate(mvMatrix, trans);
+      if (shapes[cursor] == 'v')
+          mvMatrix = mat4.rotate(mvMatrix, degToRad(90.0), [0, 0, 1]);  // rotate if any 
+      mvMatrix = mat4.rotate(mvMatrix, degToRad(0.0), [0, 0, 1]);  // rotate if any 
+      transformation_matrices.push(mvMatrix);
+
+      shape_counter++; 
+      
+      console.log("size=", shape_counter);
+      console.log("shape = ", polygon_mode);
+      drawScene();   // draw the VBO 
+    } 
 }
-
-
 ////////////////////////////////////////////////////////////////////////////////////
 //
 //   Mouse button handlers 
@@ -304,11 +290,25 @@ var lastMouseX = 0, lastMouseY = 0;
          var diffX = mouseX - lastMouseX;
          var diffY = mouseY - lastMouseY;
 
-         Z_angle = Z_angle + diffX/5;
+         Z_angle_delta = diffX/5;
 
          lastMouseX = mouseX;
          lastMouseY = mouseY;
-         shapes_rotation[shape_counter-1] = Z_angle; //update the rotation angle
+         if (transformation_mode == 0){
+            mat4.rotate(transformation_matrices[shape_counter-1], degToRad(Z_angle_delta), [0, 0, 1]);
+         }
+         else {
+            rad = degToRad(Z_angle_delta);
+            var rotation_matrix = [
+                Math.cos(rad), -Math.sin(rad), 0.0, 0.0,
+                Math.sin(rad), Math.cos(rad), 0.0, 0.0,
+                0.0, 0.0, 1.0, 0.0,
+                0.0, 0.0, 0.0, 1.0
+              ]            
+            for (var i = 0; i < shape_counter; i++)
+                mvMatrix = mat4.multiply(rotation_matrix, transformation_matrices[i], transformation_matrices[i]);   //pre-multiply
+         } 
+
 
          drawScene();
      }
@@ -434,13 +434,51 @@ var lastMouseX = 0, lastMouseY = 0;
          case 83: 
               if (event.shiftKey) {
                   console.log('enter S');
-                  shapes_scale[shape_counter-1] *= 1.1; 
+                  if (transformation_mode == 0){
+                      var scale = [1.1, 1.1, 1.1];
+                      transformation_matrices[shape_counter-1] = mat4.scale(transformation_matrices[shape_counter-1], scale);  
+                  } 
+                  else {
+                      var scale_matrix = [
+                          1.1, 0.0, 0.0, 0.0,
+                          0.0, 1.1, 0.0, 0.0,
+                          0.0, 0.0, 1.1, 0.0,
+                          0.0, 0.0, 0.0, 1.0
+                      ]
+                      for (var i = 0; i < shape_counter; i++){
+                        mvMatrix = mat4.multiply(scale_matrix, transformation_matrices[i], transformation_matrices[i]);   //pre-multiply 
+                      }
+                  }
               }    
               else {
                   console.log('enter s');
-                  shapes_scale[shape_counter-1] *= 0.9;
+                  if (transformation_mode == 0){
+                      var scale = [0.9, 0.9, 0.9];
+                      transformation_matrices[shape_counter-1] = mat4.scale(transformation_matrices[shape_counter-1], scale);  
+                  }
+                  else {
+                      var scale_matrix = [
+                          0.9, 0.0, 0.0, 0.0,
+                          0.0, 0.9, 0.0, 0.0,
+                          0.0, 0.0, 0.9, 0.0,
+                          0.0, 0.0, 0.0, 1.0
+                      ]
+                      for (var i = 0; i < shape_counter; i++){
+                        mvMatrix = mat4.multiply(scale_matrix, transformation_matrices[i], transformation_matrices[i]);   //pre-multiply 
+                      }
+                  }
               }
               drawScene();
+              break;
+         case 87:
+              if (event.shiftKey){
+                console.log('enter W');
+                transformation_mode = 1;
+              }
+              else {
+                console.log('enter w');
+                transformation_mode = 0;
+              }
               break;
       }
 	console.log('polygon mode =', polygon_mode);
