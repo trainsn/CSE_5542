@@ -27,6 +27,8 @@ var polygon_mode = 'h';  //default = h
 var color_mode  = 'r';
 var transformation_mode = 0;  //0: transformation on the last shape, 1: global transformation, 2: transformation on the selected shape 
 
+var selected_shape = -1;
+
 //////////// Init OpenGL Context etc. ///////////////
 
 function initGL(canvas) {
@@ -247,15 +249,15 @@ var lastMouseX = 0, lastMouseY = 0;
     lastMouseX = mouseX;
     lastMouseY = mouseY;
 
-    if (transformation_mode == 0){
-      //get canvas' coordinate from the browser client area
-      var rect = event.target.getBoundingClientRect();
+    //get canvas' coordinate from the browser client area
+    var rect = event.target.getBoundingClientRect();
 
-      //tranform the coordinate from client area to canvas, then tranform to webgl
-      NDC_X = ((event.clientX - rect.left) - vp_width/2) / (vp_width/2);
-      NDC_Y = (vp_height/2 - (event.clientY - rect.top)) / (vp_height/2);
-      console.log("NDC click", event.clientX, event.clientY, NDC_X, NDC_Y);
-      
+    //tranform the coordinate from client area to canvas, then tranform to webgl
+    NDC_X = ((event.clientX - rect.left) - vp_width/2) / (vp_width/2);
+    NDC_Y = (vp_height/2 - (event.clientY - rect.top)) / (vp_height/2);
+    console.log("NDC click", event.clientX, event.clientY, NDC_X, NDC_Y);
+
+    if (transformation_mode == 0){    
       shapes.push(polygon_mode);
       colors.push(color_mode); 
 
@@ -277,6 +279,28 @@ var lastMouseX = 0, lastMouseY = 0;
       console.log("shape = ", polygon_mode);
       drawScene();   // draw the VBO 
     } 
+    else if (transformation_mode == 2){
+      selected_shape = -1;
+      var min_dist = 10.0;
+      var argmin_dist = -1;
+      for (var i=0; i < shape_counter; i++){
+          var ori_point = quat4.create([0.0, 0.0, 0.0, 1.0]);
+          var center_point = quat4.create();
+          mat4.multiplyVec4(transformation_matrices[i], ori_point, center_point);
+          var center_x = center_point[0];
+          var center_y = center_point[1];
+
+          if ((NDC_X-center_x)*(NDC_X-center_x) + (NDC_Y-center_y)*(NDC_Y-center_y) < min_dist){
+            min_dist = (NDC_X-center_x)*(NDC_X-center_x) + (NDC_Y-center_y)*(NDC_Y-center_y);
+            argmin_dist = i;
+          }
+      }  
+
+      if (min_dist < 0.05 * 0.05){
+        selected_shape = argmin_dist;
+      }
+      console.log("selected_shape", selected_shape);
+    } 
 }
 ////////////////////////////////////////////////////////////////////////////////////
 //
@@ -297,7 +321,7 @@ var lastMouseX = 0, lastMouseY = 0;
          if (transformation_mode == 0){
             mat4.rotate(transformation_matrices[shape_counter-1], degToRad(Z_angle_delta), [0, 0, 1]);
          }
-         else {
+         else if (transformation_mode == 1) {
             rad = degToRad(Z_angle_delta);
             var rotation_matrix = [
                 Math.cos(rad), -Math.sin(rad), 0.0, 0.0,
@@ -308,6 +332,11 @@ var lastMouseX = 0, lastMouseY = 0;
             for (var i = 0; i < shape_counter; i++)
                 mvMatrix = mat4.multiply(rotation_matrix, transformation_matrices[i], transformation_matrices[i]);   //pre-multiply
          } 
+         else {
+            if (selected_shape >= 0){
+              mat4.rotate(transformation_matrices[selected_shape], degToRad(Z_angle_delta), [0, 0, 1]);
+            }
+         }
 
 
          drawScene();
@@ -335,82 +364,103 @@ var lastMouseX = 0, lastMouseY = 0;
       switch(event.keyCode)  {
          case 80: 
               if (event.shiftKey) {
-                  console.log('enter P');
-                  polygon_mode = 'p' 
+                  console.log('enter P');   
               }
               else {
-                  console.log('enter p');
-                  polygon_mode = 'p'      
+                  console.log('enter p');      
               }
+              if (transformation_mode == 0)
+                polygon_mode = 'p';
               break;
          case 72:
               if (event.shiftKey) {
                   console.log('enter H');
-                  polygon_mode = 'h' 
               }
               else {
-                  console.log('enter h');
-                  polygon_mode = 'h'      
+                  console.log('enter h');      
               }
+              if (transformation_mode == 0)
+                polygon_mode = 'h';
               break;
          case 86:
               if (event.shiftKey) {
-                  console.log('enter V');
-                  polygon_mode = 'v'            
+                  console.log('enter V');          
               }
               else {
-                  console.log('enter v');
-                  polygon_mode = 'v'          
+                  console.log('enter v');         
               }
+              if (transformation_mode == 0)
+                polygon_mode = 'v';
               break;
          case 84: 
               if (event.shiftKey) {
                   console.log('enter T'); 
-                  polygon_mode = 't' 
               }
               else {
-                  console.log('enter t');
-                  polygon_mode = 't'      
+                  console.log('enter t');      
               }
+              if (transformation_mode == 0)
+                polygon_mode = 't';
               break;
          case 81: 
               if (event.shiftKey) {
-                  console.log('enter Q'); 
-                  polygon_mode = 'q' 
+                  console.log('enter Q');  
               }
               else {
-                  console.log('enter q');
-                  polygon_mode = 'q'      
+                  console.log('enter q');      
               }
+              if (transformation_mode == 0)
+                polygon_mode = 'q';
               break;       
          case 82:
               if (event.shiftKey) {
-                  console.log('enter R');
-                  color_mode = 'r'            
+                  console.log('enter R');            
               }
               else {
-                  console.log('enter r');
-                  color_mode = 'r'          
+                  console.log('enter r');          
+              }
+              if (transformation_mode == 0){
+                color_mode = 'r';
+              } 
+              else if (transformation_mode == 2){
+                if (selected_shape >= 0){
+                  colors[selected_shape] = 'r';
+                  drawScene();
+                }
               }
               break;
          case 71:
               if (event.shiftKey) {
-                  console.log('enter G');
-                  color_mode = 'g'            
+                  console.log('enter G');           
               }
               else {
-                  console.log('enter g');
-                  color_mode = 'g'          
+                  console.log('enter g');         
+              }
+              if (transformation_mode == 0){
+                color_mode = 'g';
+              } 
+              else if (transformation_mode == 2){
+                if (selected_shape >= 0){
+                  colors[selected_shape] = 'g';
+                  drawScene();
+                }
               }
               break;
          case 66:
               if (event.shiftKey) {
-                  console.log('enter B');
-                  color_mode = 'b'            
+                  console.log('enter B');            
               }
               else {
-                  console.log('enter b');
-                  color_mode = 'b'          
+                  console.log('enter b');          
+              }
+              if (transformation_mode == 0){
+                color_mode = 'b';
+              } 
+              else if (transformation_mode == 2){
+                if (selected_shape >= 0){
+                  colors[selected_shape] = 'b';
+                  drawScene();
+                }
               }
               break;  
          case 67:
@@ -438,7 +488,7 @@ var lastMouseX = 0, lastMouseY = 0;
                       var scale = [1.1, 1.1, 1.1];
                       transformation_matrices[shape_counter-1] = mat4.scale(transformation_matrices[shape_counter-1], scale);  
                   } 
-                  else {
+                  else if (transformation_mode == 1){
                       var scale_matrix = [
                           1.1, 0.0, 0.0, 0.0,
                           0.0, 1.1, 0.0, 0.0,
@@ -449,6 +499,12 @@ var lastMouseX = 0, lastMouseY = 0;
                         mvMatrix = mat4.multiply(scale_matrix, transformation_matrices[i], transformation_matrices[i]);   //pre-multiply 
                       }
                   }
+                  else{
+                      if (selected_shape >= 0){
+                        var scale = [1.1, 1.1, 1.1];
+                        transformation_matrices[selected_shape] = mat4.scale(transformation_matrices[selected_shape], scale);  
+                      }
+                  }
               }    
               else {
                   console.log('enter s');
@@ -456,7 +512,7 @@ var lastMouseX = 0, lastMouseY = 0;
                       var scale = [0.9, 0.9, 0.9];
                       transformation_matrices[shape_counter-1] = mat4.scale(transformation_matrices[shape_counter-1], scale);  
                   }
-                  else {
+                  else if (transformation_mode == 1){
                       var scale_matrix = [
                           0.9, 0.0, 0.0, 0.0,
                           0.0, 0.9, 0.0, 0.0,
@@ -465,6 +521,12 @@ var lastMouseX = 0, lastMouseY = 0;
                       ]
                       for (var i = 0; i < shape_counter; i++){
                         mvMatrix = mat4.multiply(scale_matrix, transformation_matrices[i], transformation_matrices[i]);   //pre-multiply 
+                      }
+                  }
+                  else {
+                      if (selected_shape >= 0){
+                        var scale = [0.9, 0.9, 0.9];
+                        transformation_matrices[selected_shape] = mat4.scale(transformation_matrices[selected_shape], scale);  
                       }
                   }
               }
@@ -478,6 +540,18 @@ var lastMouseX = 0, lastMouseY = 0;
               else {
                 console.log('enter w');
                 transformation_mode = 0;
+              }
+              break;
+         case 65: 
+              if (event.shiftKey){
+                console.log('enter A');
+                transformation_mode = 2;
+                selected_shape = -1;
+              }
+              else {
+                console.log('enter a');
+                transformation_mode = 0;
+                selected_shape = -1;
               }
               break;
       }
