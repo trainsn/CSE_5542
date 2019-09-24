@@ -121,7 +121,7 @@ function Transform(){
 }
 
 function draw_points(){
-    gl.bindBuffer(gl.ARRAY_BUFFER, PointVertexPositionBuffer);    // make the line current buffer 
+    gl.bindBuffer(gl.ARRAY_BUFFER, PointVertexPositionBuffer);    // make the point current buffer 
     gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, PointVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     Transform();
@@ -137,7 +137,7 @@ function draw_lines() {
 }
 
 function draw_triangles(){
-    gl.bindBuffer(gl.ARRAY_BUFFER, TriangleVertexPositionBuffer);    // make the line current buffer 
+    gl.bindBuffer(gl.ARRAY_BUFFER, TriangleVertexPositionBuffer);    // make the triangle current buffer 
     gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, LineVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     Transform();
@@ -145,7 +145,7 @@ function draw_triangles(){
 }
 
 function draw_squares(){
-    gl.bindBuffer(gl.ARRAY_BUFFER, SquareVertexPositionBuffer);    // make the line current buffer 
+    gl.bindBuffer(gl.ARRAY_BUFFER, SquareVertexPositionBuffer);    // make the square current buffer 
     gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, LineVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     Transform();
@@ -155,7 +155,7 @@ function draw_squares(){
 ///////////////////////////////////////////////////////////////////////
 
 function initScene() {
-    vp_minX = 0; vp_maxX = gl.canvasWidth;  vp_width = vp_maxX- vp_minX+1; 
+    vp_minX = 0; vp_maxX = gl.canvasWidth;  vp_width = vp_maxX-vp_minX+1; 
     vp_minY = 0; vp_maxY = gl.canvasHeight; vp_height = vp_maxY-vp_minY+1; 
     console.log(vp_minX, vp_maxX, vp_minY, vp_maxY); 
     gl.viewport(vp_minX, vp_minY, vp_width, vp_height); 
