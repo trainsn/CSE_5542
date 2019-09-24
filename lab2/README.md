@@ -1,16 +1,11 @@
-# Lab 1 
+# Lab 2
 ##  Describes how to use your program
-Open the HTML file, and follow the instruction to draw all the shapes.
-
-The re-display is implemented in the redisplayScreen() function, I clear all the buffer and then redraw. 
-
+Open the HTML file, and follow the instruction to draw all the shapes and do all the transformation. 
 
 ## States which bonus tasks you attempted
-I tried to finish the both bonus point. 
+I tried to finish the bonus point. 
 
-The first one is drawing circles, you can press 'r' and click the mouse to draw it.
-
-The second one is allow window resizing. In my implementation, the canvas size is the same the whole window size, and as the window size changes, all the shapes are repotioned and resized proportionally to the new window. 
+When you click "A", you are going into "selecting one specific shape" mode. In this mode, after you click the left mouse, instead of drawing one shape, the program will search for the shape which is closest to mouse position, and check whether it is within a given distance range (here is 0.05). If the closest shape is in the range, then we can use mouse to rotate, 's/S' to scale, and 'r/g/b' to recolor. After you click "a", you are going back to the "drawing a new shape mode".     
 
 ##  Lists which browser/OS you developed your code on 
 Chrome/Win 10 
