@@ -117,7 +117,7 @@ function createCylinder(tRad, bRad, height, nSlice = 20, nStack = 1){
     for (var i = 0; i < nSlice; i++){
         var a = i * aStep;
         for (var j = 0; j <= nStack; j++){
-            var h = j * hStep;
+            var h = j * hStep - height/2;
             var r = bRad - j * rStep; 
             vertices.push(r * Math.cos(a));
             vertices.push(h);
@@ -167,10 +167,78 @@ function createCylinder(tRad, bRad, height, nSlice = 20, nStack = 1){
     CylinderVertexIndexBuffer.numItems = indices.length;
 }
 
+function createSphere(rad, nSlice=20, nStack = 20) {
+    var vertices = [];
+    var indices = [];
+    var colors = [];
+
+    var height = 2 * rad;
+    var aStep = Math.PI*2 / nSlice;
+    var hStep = Math.PI / nStack;
+
+    // vertices and colors
+    vertices.push(0.0, -rad, 0.0);
+    colors.push(1.0, 0.0, 0.0, 1.0);
+    for (var j = 1; j < nStack; j++){
+        var h = -Math.PI/2 + hStep*j;
+        for (var i = 0; i < nSlice; i++){
+            var a = i * aStep;
+            vertices.push(Math.cos(h) * Math.cos(a) * rad);
+            vertices.push(Math.sin(h) * rad);
+            vertices.push(Math.cos(h) * Math.sin(a) * rad);
+
+            for (var k = 0; k < 3; k++){
+              if (i % 3 == k)
+                colors.push(1.0);
+              else 
+                colors.push(0.0);
+            }
+            colors.push(1.0);
+        }        
+    }
+    vertices.push(0.0, rad, 0.0);
+    colors.push(1.0, 0.0, 0.0, 1.0);
+
+    SphereVertexPositionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, SphereVertexPositionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+    SphereVertexPositionBuffer.itemSize = 3;
+    SphereVertexPositionBuffer.numItems = nSlice * (nStack-1) + 2;
+
+    SphereVertexColorBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, SphereVertexColorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+    SphereVertexColorBuffer.itemSize = 4;
+    SphereVertexColorBuffer.numItems = nSlice * (nStack-1) + 2;
+
+    // indices 
+    for (var i = 0; i < nSlice; i++)
+        indices.push(0, 1 + i, 1 + (i+1)%nSlice);
+    for (var j = 0;  j < nStack-2; j++){
+        for (var i=0; i<nSlice; i++){
+            var start = j * nSlice + 1 + i;
+            var next =  j * nSlice + 1 + (i+1)%nSlice;
+            indices.push(start, next, start+nSlice);
+            indices.push(next, next+nSlice, start+nSlice);
+        }
+    } 
+    for (var i = 0; i < nSlice; i++){
+        var start = (nStack-2) * nSlice + 1 + i;
+        var next =  (nStack-2) * nSlice + 1 + (i+1)%nSlice;
+        indices.push(start, next, nSlice * (nStack-1) + 1); 
+    }   
+
+    SphereVertexIndexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, SphereVertexIndexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+    SphereVertexIndexBuffer.itemSize = 1;
+    SphereVertexIndexBuffer.numItems = indices.length;    
+}
+
 function createBuffer() {
     createCube();
     createCylinder(0.0, 0.5, 1);
-    
+    createSphere(0.5);
 }
 
 ///////////////////////////////////////////////////////
@@ -206,6 +274,7 @@ function drawCube(){
 }
 
 function drawCylinder(){
+    createCylinder(0.2, 0.5, 1);
     gl.bindBuffer(gl.ARRAY_BUFFER, CylinderVertexPositionBuffer);    // make the cube current buffer 
     gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, CylinderVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
@@ -218,20 +287,34 @@ function drawCylinder(){
     gl.drawElements(gl.TRIANGLES, CylinderVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 }
 
+function drawSphere(){
+    gl.bindBuffer(gl.ARRAY_BUFFER, SphereVertexPositionBuffer);    // make the cube current buffer 
+    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, SphereVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, SphereVertexColorBuffer);
+    gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, SphereVertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, SphereVertexIndexBuffer);
+    setMatrixUniforms();
+
+    gl.drawElements(gl.TRIANGLES, SphereVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+
+}
+
 ///////////////////////////////////////////////////////////////////////
 
 function drawScene() {
     gl.viewport(0, 0, gl.viewportWidth, gl.viweportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    mat4.lookAt([0,0,5], [0,0,0], [0,1,0], vMatrix);
+    mat4.lookAt([2,1,3], [0,0,0], [0,1,0], vMatrix);
     mat4.perspective(60, 1.0, 0.1, 100, pMatrix);
 
     mat4.identity(mMatrix); 
     mat4.translate(mMatrix, [left_incre, 0, front_incre], mMatrix);
     mat4.multiply(vMatrix, mMatrix, mvMatrix);
 
-    drawCylinder();
+    drawCube();
 }
 
 ///////////////////////////////////////////////////////////////
