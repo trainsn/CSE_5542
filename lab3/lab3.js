@@ -257,6 +257,31 @@ var first_vMatrix = mat4.create();
 var front_incre = 0.0;
 var left_incre = 0.0;
 
+// car cube 
+var carLength = 4.0;
+var carWidth  = 2.0;
+var carHeight = 0.5;
+// wheels cylinder 
+var wheelCount = 8;
+var wheelRad = carLength / wheelCount / 2;
+var wheelHeight = 0.3;
+// base cylinder 
+var baseHeight = 0.1;
+var baseRad = 1;
+// arm1 cube  
+var arm1Height = 0.1;
+var arm1Width = 0.3;
+// joint1 sphere
+var joint1Rad = 0.2;
+// arm2 cube  
+var arm2Height = 1;
+var arm2Width = 0.4;
+// joint2 + finger 
+var joint2Rad = 0.05;
+var fingerHeight = 0.6
+var fingerRad  = 0.05;
+var fingerCount = 2;
+
 var angle_step = 3.0;
 var arm1Yangle = 0.0;
 var joint1Xangle = 45.0;
@@ -270,7 +295,7 @@ var pitchMatrix = mat4.create();
 var rollMatrix = mat4.create();
 // Model to View 
 mat4.lookAt([3,2,4], [0,0,0], [0,1,0], third_vMatrix);
-mat4.lookAt([0,0.4,1], [0,0.4,0], [0,1,0], first_vMatrix);
+mat4.lookAt([0,baseHeight+arm1Height+joint1Rad,baseRad], [0,baseHeight+arm1Height+joint1Rad,0], [0,1,0], first_vMatrix);
 mat4.set(third_vMatrix, vMatrix);
 var camera_mode = 3;
 
@@ -336,9 +361,6 @@ function drawScene() {
     createCylinder(1, 1, 1);
     pushMatrix(mMatrix);
       // car cube
-      var carLength = 4.0;
-      var carWidth  = 2.0;
-      var carHeight = 0.5;
       mat4.translate(mMatrix, [0, -carHeight/2, 0], mMatrix);
       pushMatrix(mMatrix);
         mat4.scale(mMatrix, [carWidth, carHeight, carLength], mMatrix);
@@ -347,9 +369,6 @@ function drawScene() {
       mat4.set(popMatrix(), mMatrix); 
 
       //wheels cylinder
-      var wheelCount = 8;
-      var wheelRad = carLength / wheelCount / 2;
-      var wheelHeight = 0.3;
       // right side
       pushMatrix(mMatrix);
           mat4.translate(mMatrix, [carWidth/2-wheelHeight/2, -wheelRad-carHeight/2, -carLength/2-wheelRad], mMatrix);
@@ -383,8 +402,6 @@ function drawScene() {
     mat4.set(popMatrix(), mMatrix);
 
     // cylinder base 
-    var baseHeight = 0.1;
-    var baseRad = 1;
     mat4.translate(mMatrix, [0, baseHeight/2, 0], mMatrix);
     pushMatrix(mMatrix);
       mat4.scale(mMatrix, [baseRad, baseHeight, baseRad], mMatrix);
@@ -393,8 +410,6 @@ function drawScene() {
     mat4.set(popMatrix(), mMatrix);
 
     // Arm1 Cube
-    var arm1Height = 0.1;
-    var arm1Width = 0.3;
     mat4.translate(mMatrix, [0, baseHeight/2+arm1Height/2, 0], mMatrix);
     mat4.rotate(mMatrix, degToRad(arm1Yangle), [0, 1, 0], mMatrix);
     pushMatrix(mMatrix);
@@ -404,7 +419,6 @@ function drawScene() {
     mat4.set(popMatrix(), mMatrix);
 
     // Joint1 sphere
-    var joint1Rad = 0.2;
     mat4.translate(mMatrix, [0, arm1Height/2+joint1Rad/2, 0], mMatrix);
     mat4.rotate(mMatrix, degToRad(joint1Xangle), [1,0,0], mMatrix);
     pushMatrix(mMatrix);
@@ -414,8 +428,6 @@ function drawScene() {
     mat4.set(popMatrix(), mMatrix); 
 
     // Arm2 Cube
-    var arm2Height = 1;
-    var arm2Width = 0.4;
     mat4.translate(mMatrix, [0, joint1Rad/2+arm2Height/2, 0], mMatrix);
     pushMatrix(mMatrix);
       mat4.scale(mMatrix, [arm2Width, arm2Height, arm2Width], mMatrix);
@@ -437,10 +449,6 @@ function drawScene() {
     
     // joint2 + Fingers
     createCylinder(0, 1, 1);
-    var joint2Rad = 0.05;
-    var fingerHeight = 0.6
-    var fingerRad  = 0.05;
-    var fingerCount = 2;
     mat4.translate(mMatrix, [0, palmHeight/2+joint2Rad, 0], mMatrix);
     for (var i = 0; i < fingerCount; i++){
         var dx = ((i+0.5) / fingerCount - 0.5) / 2;
