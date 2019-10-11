@@ -252,6 +252,8 @@ var vMatrix = mat4.create();
 var mMatrix = mat4.create();
 var mvMatrix = mat4.create();
 var pMatrix = mat4.create();
+var third_vMatrix = mat4.create();
+var first_vMatrix = mat4.create();
 var front_incre = 0.0;
 var left_incre = 0.0;
 
@@ -260,6 +262,20 @@ var arm1Yangle = 0.0;
 var joint1Xangle = 45.0;
 var palmYangle = 0.0;
 var joint2Zangle = 0.0;
+var joint2Matrix = mat4.create();
+mat4.identity(joint2Matrix);
+
+var yawMatrix = mat4.create();
+var pitchMatrix = mat4.create();
+var rollMatrix = mat4.create();
+// Model to View 
+mat4.lookAt([3,2,4], [0,0,0], [0,1,0], third_vMatrix);
+mat4.lookAt([0,0.4,1], [0,0.4,0], [0,1,0], first_vMatrix);
+mat4.set(third_vMatrix, vMatrix);
+var camera_mode = 3;
+
+// View to Projection 
+mat4.perspective(60, 1.0, 0.1, 100, pMatrix);
 
 function setMatrixUniforms(){
     gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
@@ -311,9 +327,6 @@ function drawSphere(){
 function drawScene() {
     gl.viewport(0, 0, gl.viewportWidth, gl.viweportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    mat4.lookAt([3,2,4], [0,0,0], [0,1,0], vMatrix);
-    mat4.perspective(60, 1.0, 0.1, 100, pMatrix);
 
     mat4.identity(mMatrix); 
     // global move
@@ -367,8 +380,6 @@ function drawScene() {
               mat4.set(popMatrix(), mMatrix);
           }  
       mat4.set(popMatrix(), mMatrix); 
-      
-
     mat4.set(popMatrix(), mMatrix);
 
     // cylinder base 
@@ -427,7 +438,7 @@ function drawScene() {
     // joint2 + Fingers
     createCylinder(0, 1, 1);
     var joint2Rad = 0.05;
-    var fingerHeight = 0.2;
+    var fingerHeight = 0.6
     var fingerRad  = 0.05;
     var fingerCount = 2;
     mat4.translate(mMatrix, [0, palmHeight/2+joint2Rad, 0], mMatrix);
@@ -436,7 +447,7 @@ function drawScene() {
         pushMatrix(mMatrix);
           //joint 2 - sphere
           mat4.translate(mMatrix, [dx, 0, 0], mMatrix);
-          mat4.rotate(mMatrix, degToRad(joint2Zangle), [0,0,1], mMatrix);
+          mat4.multiply(mMatrix, joint2Matrix, mMatrix);
           pushMatrix(mMatrix);
             mat4.scale(mMatrix, [joint2Rad, joint2Rad, joint2Rad], mMatrix);
             mat4.multiply(vMatrix, mMatrix, mvMatrix);
@@ -498,14 +509,6 @@ var lastMouseX = 0, lastMouseY = 0;
     function onKeyDown(event) {
       console.log(event.keyCode);
       switch(event.keyCode)  {
-          case 80: 
-              if (event.shiftKey) {
-                  console.log('enter P');   
-              }
-              else {
-                  console.log('enter p');      
-              }
-              break;
           case 87:
               console.log('enter W');
               front_incre -= 0.03;
@@ -544,7 +547,7 @@ var lastMouseX = 0, lastMouseY = 0;
               drawScene();
               break;  
           case 39:
-              console.log('enter right arrow');
+              console.log('enter right arrow key');
               arm1Yangle += angle_step;;
               drawScene();
               break;   
@@ -560,14 +563,81 @@ var lastMouseX = 0, lastMouseY = 0;
               break;
           case 67:
               console.log('enter C');
-              if (joint2Zangle < 60.0)
+              if (joint2Zangle < 60.0) {
                 joint2Zangle += angle_step;
+                mat4.rotate(joint2Matrix, degToRad(angle_step), [0,0,1], joint2Matrix);
+              }
               drawScene();
               break;
           case 86:
               console.log('enter V');
-              if (joint2Zangle > -60.0)
+              if (joint2Zangle > -60.0){
                 joint2Zangle -= angle_step;
+                mat4.rotate(joint2Matrix, degToRad(-angle_step), [0,0,1], joint2Matrix);
+              }
+              drawScene();
+              break;
+          case 82: 
+              mat4.identity(rollMatrix);
+              if (event.shiftKey) {
+                  console.log('enter R, clockwise');
+                  mat4.rotate(rollMatrix, degToRad(-angle_step), [0, 0, 1], rollMatrix);                 
+              }
+              else {
+                  console.log('enter r, counterclockwise');
+                  mat4.rotate(rollMatrix, degToRad(angle_step), [0, 0, 1], rollMatrix);        
+              }
+              mat4.multiply(rollMatrix, vMatrix, vMatrix); 
+              if (camera_mode == 1)
+                  mat4.set(vMatrix, first_vMatrix);
+              else 
+                  mat4.set(vMatrix, third_vMatrix);
+              drawScene();
+              break;
+          case 80:
+              mat4.identity(pitchMatrix);
+              if (event.shiftKey) {
+                  console.log('enter P, look up');
+                  mat4.rotate(pitchMatrix, degToRad(-angle_step/5), [1, 0, 0], pitchMatrix);
+              } 
+              else {
+                  console.log('enter p, look down');
+                  mat4.rotate(pitchMatrix, degToRad(angle_step/5), [1, 0, 0], pitchMatrix)
+              } 
+              mat4.multiply(pitchMatrix, vMatrix, vMatrix);
+              if (camera_mode == 1)
+                  mat4.set(vMatrix, first_vMatrix);
+              else 
+                  mat4.set(vMatrix, third_vMatrix);
+              drawScene();
+              break;
+          case 89:
+              mat4.identity(yawMatrix);
+              if (event.shiftKey) {
+                  console.log('enter Y, look left');
+                  mat4.rotate(yawMatrix, degToRad(-angle_step/5), [0, 1, 0], yawMatrix);
+              }  
+              else {
+                  console.log('enter y, look right');
+                  mat4.rotate(yawMatrix, degToRad(angle_step/5), [0, 1, 0], yawMatrix);
+              } 
+              mat4.multiply(yawMatrix, vMatrix, vMatrix);
+              if (camera_mode == 1)
+                  mat4.set(vMatrix, first_vMatrix);
+              else 
+                  mat4.set(vMatrix, third_vMatrix);
+              drawScene();
+              break;
+          case 49:
+              console.log('enter 1, first person mode');
+              mat4.set(first_vMatrix, vMatrix);
+              camera_mode = 1;
+              drawScene();
+              break;
+          case 51:
+              console.log('enter 3, third person mode');
+              mat4.set(third_vMatrix, vMatrix);
+              camera_mode = 3;
               drawScene();
               break;
       }
