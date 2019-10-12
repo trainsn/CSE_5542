@@ -5,7 +5,7 @@
 
 <head>
 <title>WebGL &mdash; lab3 </title>
-<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">   
 
 <script type="text/javascript" src="glMatrix-0.9.5.min.js"></script>
 
@@ -22,8 +22,7 @@
     varying vec3 v_normal; 
     varying vec3 light_vector; // light vector in eye
     varying vec3 eye_vector;  
-    
-    varying vec4 vColor; 
+
     void main(void) {
         vec4 ambient = ambient_coef * light_color;
 
@@ -46,9 +45,7 @@
 <!--  ************** Vertex Shader ************* --> 
 <script id="shader-vs" type="x-shader/x-vertex">
     attribute vec3 aVertexPosition;
-    attribute vec4 aVertexColor; 
     attribute vec3 aVertexNormal;
-    varying vec4 vColor;
 
     uniform mat4 uMVMatrix; 
     uniform mat4 uPMatrix;
@@ -84,6 +81,19 @@
 
 <body onload="webGLStart();">
     <canvas id="lab3-canvas" style="border: none;" width="600" height="600"></canvas>
+    <p>
+        W/S/A/D: move the object forward/backward/left/right</br>
+        ←/→: rotate the gun mount</br>
+        ↑/↓: adjust the elevation angle</br>
+        z/x: rotate the wrist</br>
+        c/v: rotate the finger</br>
+        P/p: look up/down (pitch)</br>
+        Y/y: look left/right (yaw)</br>
+        R/r: let the object move clockwise/counterwise in eye space</br>
+        1: first-person view (image a person stand on the base and can see the gun)</br>
+        3: third-person view 
+    </p>
+
 </body>
 
 </html>
