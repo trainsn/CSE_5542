@@ -58,7 +58,7 @@
 
     void main(void) {        
         // transform normal from local to eye space: normal matrix is the inverse transpose of the modelview matrix 
-        v_normal = normalize(vec3(uNMatrix*vec4(aVertexNormal, 1.0)));
+        v_normal = normalize(vec3(uNMatrix*vec4(aVertexNormal, 0.0)));
 
         // transform the vertext position to eye space 
         vec4 eye_pos = uMVMatrix * vec4(aVertexPosition, 1.0); // vertex position in eye space
@@ -81,7 +81,7 @@
 
 <body onload="webGLStart();">
     <canvas id="lab3-canvas" style="border: none;" width="600" height="600"></canvas>
-    <p>
+    <p style="float:right">
         W/S/A/D: move the object forward/backward/left/right</br>
         ←/→: rotate the gun mount</br>
         ↑/↓: adjust the elevation angle</br>
