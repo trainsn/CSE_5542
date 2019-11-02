@@ -1,0 +1,102 @@
+
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<title>WebGL &mdash; lab4 </title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">   
+
+<script type="text/javascript" src="glMatrix-0.9.5.min.js"></script>
+
+<!--  ************** Fragment Shader ************* --> 
+<script id="shader-fs" type="x-shader/x-fragment">
+    precision mediump float;
+
+    uniform vec4 ambient_coef;
+    uniform vec4 diffuse_coef;
+    uniform vec4 specular_coef;
+    uniform vec4 light_color;
+    uniform float mat_shininess;  
+
+    varying vec3 v_normal; 
+    varying vec3 light_vector; // light vector in eye
+    varying vec3 eye_vector;  
+
+    void main(void) {
+        vec4 ambient = ambient_coef * light_color;
+
+        float ndotl = max(dot(v_normal, light_vector), 0.0);
+        vec4 diffuse = diffuse_coef * light_color * ndotl;
+
+        vec3 R = normalize(vec3(reflect(-light_vector, v_normal)));
+        float rdotv = max(dot(R, eye_vector), 0.0);
+
+        vec4 specular;
+        if (ndotl > 0.0)
+            specular = specular_coef * light_color * pow(rdotv, mat_shininess);
+        else 
+            specular = vec4(0,0,0,1);
+
+        gl_FragColor = ambient+diffuse+specular;
+        // gl_FragColor = vec4(v_normal, 1.0);
+    }
+</script>
+
+<!--  ************** Vertex Shader ************* --> 
+<script id="shader-vs" type="x-shader/x-vertex">
+    attribute vec3 aVertexPosition;
+    attribute vec3 aVertexNormal;
+
+    uniform mat4 uMVMatrix; 
+    uniform mat4 uVMatrix;
+    uniform mat4 uPMatrix;
+    uniform mat4 uNMatrix; // transform normal from local to eye 
+    uniform vec4 light_pos; // light position in eye space 
+  
+    varying vec3 v_normal; 
+    varying vec3 light_vector; // light vector in eye
+    varying vec3 eye_vector;  
+
+    void main(void) {        
+        // transform normal from local to eye space: normal matrix is the inverse transpose of the modelview matrix 
+        v_normal = normalize(vec3(uNMatrix*vec4(aVertexNormal, 0.0)));
+
+        // transform the vertext position to eye space 
+        vec4 eye_pos = uMVMatrix * vec4(aVertexPosition, 1.0); // vertex position in eye space
+
+        // eye vector V = e-p, where e is (0,0,0)
+        eye_vector = normalize(-vec3(eye_pos));
+
+        // light vector in eye space L = l-p 
+        light_vector = normalize(vec3(uVMatrix*light_pos - eye_pos));
+
+        gl_Position = uPMatrix*uMVMatrix*vec4(aVertexPosition, 1.0);
+        gl_PointSize = 5.0;
+    }
+</script>
+
+<script type="text/javascript" src="shaders_setup.js"></script>
+<script type="text/javascript" src="lab4.js"></script>
+</head>
+
+
+<body onload="webGLStart();">
+    <canvas id="lab4-canvas" style="border: none;" width="600" height="600"></canvas>
+    <p style="float:right">
+        W/S/A/D: move the object forward/backward/left/right</br>
+        ←/→: rotate the gun mount</br>
+        ↑/↓: adjust the elevation angle</br>
+        z/x: rotate the wrist</br>
+        c/v: rotate the finger</br>
+        P/p: look up/down (pitch)</br>
+        Y/y: look left/right (yaw)</br>
+        R/r: let the object move clockwise/counterwise in eye space</br>
+        1: first-person view (image a person stand on the base and can see the gun)</br>
+        3: third-person view 
+    </p>
+
+</body>
+
+</html>
+
