@@ -69,6 +69,7 @@
         eye_vector = normalize(-vec3(eye_pos));
 
         // light vector in eye space L = l-p 
+        // light_vector = normalize(vec3(light_pos - eye_pos));
         light_vector = normalize(vec3(uVMatrix*light_pos - eye_pos));
 
         gl_Position = uPMatrix*uMVMatrix*vec4(aVertexPosition, 1.0);
