@@ -9,12 +9,15 @@ var gl;  // the graphics context (gc)
 var shaderProgram;  // the shader program 
 
 var CubeVertexPositionBuffer;
+var CubeVertexTextureCoordBuffer; 
 var CubeVertexIndexBuffer;
 var CubeVertexNormalBuffer;
 var CylinderVertexPositionBuffer;
+var CylinderVertexTextureCoordBuffer;
 var CylinderVertexIndexBuffer;
 var CylinderVertexNormalBuffer;
 var SphereVertexPositionBuffer;
+var SphereVertexTextureCoordBuffer;
 var SphereVertexIndexBuffer;
 var SphereVertexNormalBuffer;
 
@@ -261,6 +264,13 @@ function createCube(size){
     CubeVertexPositionBuffer.itemSize = 3;
     CubeVertexPositionBuffer.numItems = 24;
 
+
+    CubeVertexTextureCoordBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, CubeVertexTextureCoordBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(), gl.STATIC_DRAW);
+    CubeVertexTextureCoordBuffer.itemSize = 2;
+    CubeVertexTextureCoordBuffer.numItems = 0;
+
     var normals = [
           0.0, 0.0, 1.0,    0.0, 0.0, 1.0,     0.0, 0.0, 1.0,   0.0, 0.0, 1.0,  //v0, v1, v2, v3 front 
           1.0, 0.0, 0.0,    1.0, 0.0, 0.0,     1.0, 0.0, 0.0,   1.0, 0.0, 0.0,  //v0, v3, v4, v5 right
@@ -346,6 +356,12 @@ function createCylinder(tRad, bRad, height, nSlice = 30, nStack = 1){
     CylinderVertexPositionBuffer.itemSize = 3;
     CylinderVertexPositionBuffer.numItems = nSlice * (nStack+3);
 
+    CylinderVertexTextureCoordBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, CylinderVertexTextureCoordBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(), gl.STATIC_DRAW);
+    CylinderVertexTextureCoordBuffer.itemSize = 2;
+    CylinderVertexTextureCoordBuffer.numItems = 0;
+
     CylinderVertexNormalBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, CylinderVertexNormalBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
@@ -421,6 +437,12 @@ function createSphere(rad, nSlice=20, nStack = 20) {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
     SphereVertexPositionBuffer.itemSize = 3;
     SphereVertexPositionBuffer.numItems = nSlice * (nStack-1) + 2;
+
+    SphereVertexTextureCoordBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, SphereVertexTextureCoordBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(), gl.STATIC_DRAW);
+    SphereVertexTextureCoordBuffer.itemSize = 2;
+    SphereVertexTextureCoordBuffer.numItems = 0;
 
     SphereVertexNormalBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, SphereVertexNormalBuffer);
@@ -537,12 +559,17 @@ function drawCube(){
     gl.bindBuffer(gl.ARRAY_BUFFER, CubeVertexPositionBuffer);    // make the cube current buffer 
     gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, CubeVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
+    gl.bindBuffer(gl.ARRAY_BUFFER, CubeVertexTextureCoordBuffer);
+    gl.vertexAttribPointer(shaderProgram.vertexTexCoordsAttribute, CubeVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
     gl.bindBuffer(gl.ARRAY_BUFFER, CubeVertexNormalBuffer);
     gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, CubeVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, CubeVertexIndexBuffer);
 
     setMatrixUniforms();
+    gl.uniform1i(shaderProgram.use_textureUniform, 0);
+
     gl.drawElements(gl.TRIANGLES, CubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 }
 
@@ -550,12 +577,17 @@ function drawCylinder(){
     gl.bindBuffer(gl.ARRAY_BUFFER, CylinderVertexPositionBuffer);    // make the cube current buffer 
     gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, CylinderVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
+    gl.bindBuffer(gl.ARRAY_BUFFER, CylinderVertexTextureCoordBuffer);
+    gl.vertexAttribPointer(shaderProgram.vertexTexCoordsAttribute, CylinderVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
     gl.bindBuffer(gl.ARRAY_BUFFER, CylinderVertexNormalBuffer);
     gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, CylinderVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, CylinderVertexIndexBuffer);
 
     setMatrixUniforms();
+    gl.uniform1i(shaderProgram.use_textureUniform, 0);
+
     gl.drawElements(gl.TRIANGLES, CylinderVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 }
 
@@ -563,12 +595,17 @@ function drawSphere(){
     gl.bindBuffer(gl.ARRAY_BUFFER, SphereVertexPositionBuffer);    // make the cube current buffer 
     gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, SphereVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
+    gl.bindBuffer(gl.ARRAY_BUFFER, SphereVertexTextureCoordBuffer);
+    gl.vertexAttribPointer(shaderProgram.vertexTexCoordsAttribute, SphereVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
     gl.bindBuffer(gl.ARRAY_BUFFER, SphereVertexNormalBuffer);
     gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, SphereVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, SphereVertexIndexBuffer);
     
     setMatrixUniforms();
+    gl.uniform1i(shaderProgram.use_textureUniform, 0);
+
     gl.drawElements(gl.TRIANGLES, SphereVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 }
 
@@ -619,81 +656,80 @@ function drawScene() {
     mat4.identity(mMatrix); 
     
     // draw the light source 
-    // mat_ambient = [1.0, 1.0, 1.0, 1]; 
-    // mat_diffuse= [0.0, 0.0, 0, 1]; 
-    // mat_specular = [.0, .0, .0, 1]; 
-    // mat_shininess = [0.0];
-    // setMat();
+    mat_ambient = [1.0, 1.0, 1.0, 1]; 
+    mat_diffuse= [0.0, 0.0, 0, 1]; 
+    mat_specular = [.0, .0, .0, 1]; 
+    mat_shininess = [0.0];
+    setMat();
 
-    // pushMatrix(mMatrix);
-    //   mat4.translate(mMatrix, [light_pos[0], light_pos[1], light_pos[2]], mMatrix);
-    //   mat4.scale(mMatrix, [light_size, light_size, light_size], mMatrix);
+    pushMatrix(mMatrix);
+      mat4.translate(mMatrix, [light_pos[0], light_pos[1], light_pos[2]], mMatrix);
+      mat4.scale(mMatrix, [light_size, light_size, light_size], mMatrix);
 
-    //   mat4.multiply(vMatrix, mMatrix, mvMatrix);
-    //   mat4.inverse(mvMatrix, nMatrix);
-    //   mat4.transpose(nMatrix, nMatrix);
-    //   drawSphere();
-    // mat4.set(popMatrix(), mMatrix); 
+      mat4.multiply(vMatrix, mMatrix, mvMatrix);
+      mat4.inverse(mvMatrix, nMatrix);
+      mat4.transpose(nMatrix, nMatrix);
+      drawSphere();
+    mat4.set(popMatrix(), mMatrix); 
 
+    // draw the tank 
+    // global move
+    mat4.translate(mMatrix, [left_incre, 0, front_incre], mMatrix);
+    // lower part: car + wheels 
+    createCylinder(1, 1, 1);
+    mat_ambient = [0.0, 0.15, 0, 1]; 
+    mat_diffuse= [0.0, 0.2, 0, 1]; 
+    mat_specular = [0.5, 0.5, 0.5, 1]; 
+    mat_shininess = [50.0]; 
+    setMat();
 
-    // // draw the tank 
-    // // global move
-    // mat4.translate(mMatrix, [left_incre, 0, front_incre], mMatrix);
-    // // lower part: car + wheels 
-    // createCylinder(1, 1, 1);
-    // mat_ambient = [0.0, 0.15, 0, 1]; 
-    // mat_diffuse= [0.0, 0.2, 0, 1]; 
-    // mat_specular = [0.5, 0.5, 0.5, 1]; 
-    // mat_shininess = [50.0]; 
-    // setMat();
+    pushMatrix(mMatrix);
+      // car cube
+      mat4.translate(mMatrix, [0, -carHeight/2, 0], mMatrix);
+      pushMatrix(mMatrix);
+        mat4.scale(mMatrix, [carWidth, carHeight, carLength], mMatrix);
+        mat4.multiply(vMatrix, mMatrix, mvMatrix);
+        mat4.inverse(mvMatrix, nMatrix);
+        mat4.transpose(nMatrix, nMatrix);
+        drawCube();
+      mat4.set(popMatrix(), mMatrix); 
 
-    // pushMatrix(mMatrix);
-    //   // car cube
-    //   mat4.translate(mMatrix, [0, -carHeight/2, 0], mMatrix);
-    //   pushMatrix(mMatrix);
-    //     mat4.scale(mMatrix, [carWidth, carHeight, carLength], mMatrix);
-    //     mat4.multiply(vMatrix, mMatrix, mvMatrix);
-    //     mat4.inverse(mvMatrix, nMatrix);
-    //     mat4.transpose(nMatrix, nMatrix);
-    //     drawCube();
-    //   mat4.set(popMatrix(), mMatrix); 
+      //wheels cylinder
+      // right side
+      pushMatrix(mMatrix);
+          mat4.translate(mMatrix, [carWidth/2-wheelHeight/2, -wheelRad-carHeight/2, -carLength/2-wheelRad], mMatrix);
+          for (var i = 0; i < wheelCount; i++){
+              mat4.translate(mMatrix, [0, 0, 2*wheelRad], mMatrix);
+              pushMatrix(mMatrix);
+                mat4.rotate(mMatrix, degToRad(90.0), [0,0,1], mMatrix);
+                pushMatrix(mMatrix);
+                  mat4.scale(mMatrix, [wheelRad, wheelHeight, wheelRad], mMatrix);
+                  mat4.multiply(vMatrix, mMatrix, mvMatrix);
+                  mat4.inverse(mvMatrix, nMatrix);
+                  mat4.transpose(nMatrix, nMatrix);
+                  drawCylinder();
+                mat4.set(popMatrix(), mMatrix);
+              mat4.set(popMatrix(), mMatrix);
+          }  
 
-    //   //wheels cylinder
-    //   // right side
-    //   pushMatrix(mMatrix);
-    //       mat4.translate(mMatrix, [carWidth/2-wheelHeight/2, -wheelRad-carHeight/2, -carLength/2-wheelRad], mMatrix);
-    //       for (var i = 0; i < wheelCount; i++){
-    //           mat4.translate(mMatrix, [0, 0, 2*wheelRad], mMatrix);
-    //           pushMatrix(mMatrix);
-    //             mat4.rotate(mMatrix, degToRad(90.0), [0,0,1], mMatrix);
-    //             pushMatrix(mMatrix);
-    //               mat4.scale(mMatrix, [wheelRad, wheelHeight, wheelRad], mMatrix);
-    //               mat4.multiply(vMatrix, mMatrix, mvMatrix);
-    //               mat4.inverse(mvMatrix, nMatrix);
-    //               mat4.transpose(nMatrix, nMatrix);
-    //               drawCylinder();
-    //             mat4.set(popMatrix(), mMatrix);
-    //           mat4.set(popMatrix(), mMatrix);
-    //       }  
-
-    //   mat4.set(popMatrix(), mMatrix); 
-    //   // left side 
-    //   pushMatrix(mMatrix);
-    //       mat4.translate(mMatrix, [-carWidth/2+wheelHeight/2, -wheelRad-carHeight/2, -carLength/2-wheelRad], mMatrix);
-    //       for (var i = 0; i < wheelCount; i++){
-    //           mat4.translate(mMatrix, [0, 0, 2*wheelRad], mMatrix);
-    //           pushMatrix(mMatrix);
-    //             mat4.rotate(mMatrix, degToRad(90.0), [0,0,1], mMatrix);
-    //             pushMatrix(mMatrix);
-    //               mat4.scale(mMatrix, [wheelRad, wheelHeight, wheelRad], mMatrix);
-    //               mat4.multiply(vMatrix, mMatrix, mvMatrix);
-    //               mat4.inverse(mvMatrix, nMatrix);
-    //               mat4.transpose(nMatrix, nMatrix);
-    //               drawCylinder();
-    //             mat4.set(popMatrix(), mMatrix);
-    //           mat4.set(popMatrix(), mMatrix);
-    //       }  
-    //   mat4.set(popMatrix(), mMatrix); 
+      mat4.set(popMatrix(), mMatrix); 
+      // left side 
+      pushMatrix(mMatrix);
+          mat4.translate(mMatrix, [-carWidth/2+wheelHeight/2, -wheelRad-carHeight/2, -carLength/2-wheelRad], mMatrix);
+          for (var i = 0; i < wheelCount; i++){
+              mat4.translate(mMatrix, [0, 0, 2*wheelRad], mMatrix);
+              pushMatrix(mMatrix);
+                mat4.rotate(mMatrix, degToRad(90.0), [0,0,1], mMatrix);
+                pushMatrix(mMatrix);
+                  mat4.scale(mMatrix, [wheelRad, wheelHeight, wheelRad], mMatrix);
+                  mat4.multiply(vMatrix, mMatrix, mvMatrix);
+                  mat4.inverse(mvMatrix, nMatrix);
+                  mat4.transpose(nMatrix, nMatrix);
+                  drawCylinder();
+                mat4.set(popMatrix(), mMatrix);
+              mat4.set(popMatrix(), mMatrix);
+          }  
+      mat4.set(popMatrix(), mMatrix); 
 
       // the ground 
       // pushMatrix(mMatrix); 
@@ -704,12 +740,14 @@ function drawScene() {
       //   mat4.transpose(nMatrix, nMatrix);
       //   drawCube();
       // mat4.set(popMatrix(), mMatrix); 
-    // mat4.set(popMatrix(), mMatrix);
+    mat4.set(popMatrix(), mMatrix);
 
     // draw the loaded object  
-    mat_ambient = [0.2, 0.2, .0, 1]; 
-    mat_diffuse= [.8, .8, 0, 1]; 
-    mat_specular = [.2, .2, .2,1]; 
+    mat_ambient = [1, 1, 1, 1]; 
+    mat_diffuse= [.8, .8, .8, 1]; 
+    mat_specular = [.2, .2, .2, 1]; 
+    // mat_diffuse = [.0, .0, .0, 1];
+    // mat_specular = [.0, .0, .0, 1];
     mat_shininess = [50.0]; 
     setMat();
 
@@ -726,91 +764,91 @@ function drawScene() {
     mat_ambient = [0.0, 0.15, 0, 1]; 
     mat_diffuse= [0.0, 0.2, 0, 1]; 
     mat_specular = [0.5, 0.5, 0.5, 1]; 
-    mat_shininess = [5.0]; 
+    mat_shininess = [50.0]; 
     setMat(); 
 
-    // // cylinder base 
-    // mat4.translate(mMatrix, [0, baseHeight/2, 0], mMatrix);
-    // pushMatrix(mMatrix);
-    //   mat4.scale(mMatrix, [baseRad, baseHeight, baseRad], mMatrix);
-    //   mat4.multiply(vMatrix, mMatrix, mvMatrix);
-    //   mat4.inverse(mvMatrix, nMatrix);
-    //   mat4.transpose(nMatrix, nMatrix);
-    //   drawCylinder();
-    // mat4.set(popMatrix(), mMatrix);
+    // cylinder base 
+    mat4.translate(mMatrix, [0, baseHeight/2, 0], mMatrix);
+    pushMatrix(mMatrix);
+      mat4.scale(mMatrix, [baseRad, baseHeight, baseRad], mMatrix);
+      mat4.multiply(vMatrix, mMatrix, mvMatrix);
+      mat4.inverse(mvMatrix, nMatrix);
+      mat4.transpose(nMatrix, nMatrix);
+      drawCylinder();
+    mat4.set(popMatrix(), mMatrix);
 
-    // // Arm1 Cube
-    // mat4.translate(mMatrix, [0, baseHeight/2+arm1Height/2, 0], mMatrix);
-    // mat4.rotate(mMatrix, degToRad(arm1Yangle), [0, 1, 0], mMatrix);
-    // pushMatrix(mMatrix);
-    //   mat4.scale(mMatrix, [arm1Width, arm1Height, arm1Width], mMatrix);
-    //   mat4.multiply(vMatrix, mMatrix, mvMatrix);
-    //   mat4.inverse(mvMatrix, nMatrix);
-    //   mat4.transpose(nMatrix, nMatrix);
-    //   drawCube();
-    // mat4.set(popMatrix(), mMatrix);
+    // Arm1 Cube
+    mat4.translate(mMatrix, [0, baseHeight/2+arm1Height/2, 0], mMatrix);
+    mat4.rotate(mMatrix, degToRad(arm1Yangle), [0, 1, 0], mMatrix);
+    pushMatrix(mMatrix);
+      mat4.scale(mMatrix, [arm1Width, arm1Height, arm1Width], mMatrix);
+      mat4.multiply(vMatrix, mMatrix, mvMatrix);
+      mat4.inverse(mvMatrix, nMatrix);
+      mat4.transpose(nMatrix, nMatrix);
+      drawCube();
+    mat4.set(popMatrix(), mMatrix);
 
-    // // Joint1 sphere
-    // mat4.translate(mMatrix, [0, arm1Height/2+joint1Rad/2, 0], mMatrix);
-    // mat4.rotate(mMatrix, degToRad(joint1Xangle), [1,0,0], mMatrix);
-    // pushMatrix(mMatrix);
-    //   mat4.scale(mMatrix, [joint1Rad, joint1Rad, joint1Rad], mMatrix);
-    //   mat4.multiply(vMatrix, mMatrix, mvMatrix);
-    //   mat4.inverse(mvMatrix, nMatrix);
-    //   mat4.transpose(nMatrix, nMatrix);
-    //   drawSphere();
-    // mat4.set(popMatrix(), mMatrix); 
+    // Joint1 sphere
+    mat4.translate(mMatrix, [0, arm1Height/2+joint1Rad/2, 0], mMatrix);
+    mat4.rotate(mMatrix, degToRad(joint1Xangle), [1,0,0], mMatrix);
+    pushMatrix(mMatrix);
+      mat4.scale(mMatrix, [joint1Rad, joint1Rad, joint1Rad], mMatrix);
+      mat4.multiply(vMatrix, mMatrix, mvMatrix);
+      mat4.inverse(mvMatrix, nMatrix);
+      mat4.transpose(nMatrix, nMatrix);
+      drawSphere();
+    mat4.set(popMatrix(), mMatrix); 
 
-    // // Arm2 Cube
-    // mat4.translate(mMatrix, [0, joint1Rad/2+arm2Height/2, 0], mMatrix);
-    // pushMatrix(mMatrix);
-    //   mat4.scale(mMatrix, [arm2Width, arm2Height, arm2Width], mMatrix);
-    //   mat4.multiply(vMatrix, mMatrix, mvMatrix);
-    //   mat4.inverse(mvMatrix, nMatrix);
-    //   mat4.transpose(nMatrix, nMatrix);
-    //   drawCube();
-    // mat4.set(popMatrix(), mMatrix);
+    // Arm2 Cube
+    mat4.translate(mMatrix, [0, joint1Rad/2+arm2Height/2, 0], mMatrix);
+    pushMatrix(mMatrix);
+      mat4.scale(mMatrix, [arm2Width, arm2Height, arm2Width], mMatrix);
+      mat4.multiply(vMatrix, mMatrix, mvMatrix);
+      mat4.inverse(mvMatrix, nMatrix);
+      mat4.transpose(nMatrix, nMatrix);
+      drawCube();
+    mat4.set(popMatrix(), mMatrix);
 
-    // // Palm 
-    // var palmHeight = 0.2;
-    // var palmLength = 0.6;
-    // var palmWidth = 0.2;
-    // mat4.translate(mMatrix, [0, arm2Height/2+palmHeight/2, 0], mMatrix);
-    // mat4.rotate(mMatrix, degToRad(palmYangle), [0,1,0], mMatrix);
-    // pushMatrix(mMatrix);
-    //   mat4.scale(mMatrix, [palmLength, palmHeight, palmWidth], mMatrix);
-    //   mat4.multiply(vMatrix, mMatrix, mvMatrix);
-    //   mat4.inverse(mvMatrix, nMatrix);
-    //   mat4.transpose(nMatrix, nMatrix);
-    //   drawCube();
-    // mat4.set(popMatrix(), mMatrix);
+    // Palm 
+    var palmHeight = 0.2;
+    var palmLength = 0.6;
+    var palmWidth = 0.2;
+    mat4.translate(mMatrix, [0, arm2Height/2+palmHeight/2, 0], mMatrix);
+    mat4.rotate(mMatrix, degToRad(palmYangle), [0,1,0], mMatrix);
+    pushMatrix(mMatrix);
+      mat4.scale(mMatrix, [palmLength, palmHeight, palmWidth], mMatrix);
+      mat4.multiply(vMatrix, mMatrix, mvMatrix);
+      mat4.inverse(mvMatrix, nMatrix);
+      mat4.transpose(nMatrix, nMatrix);
+      drawCube();
+    mat4.set(popMatrix(), mMatrix);
     
-    // // joint2 + Fingers
-    // mat4.translate(mMatrix, [0, palmHeight/2+joint2Rad, 0], mMatrix);
-    // for (var i = 0; i < fingerCount; i++){
-    //     var dx = ((i+0.5) / fingerCount - 0.5) / 2;
-    //     pushMatrix(mMatrix);
-    //       //joint 2 - sphere
-    //       mat4.translate(mMatrix, [dx, 0, 0], mMatrix);
-    //       mat4.multiply(mMatrix, joint2Matrix, mMatrix);
-    //       pushMatrix(mMatrix);
-    //         mat4.scale(mMatrix, [joint2Rad, joint2Rad, joint2Rad], mMatrix);
-    //         mat4.multiply(vMatrix, mMatrix, mvMatrix);
-    //         mat4.inverse(mvMatrix, nMatrix);
-    //         mat4.transpose(nMatrix, nMatrix);
-    //         drawSphere();            
-    //       mat4.set(popMatrix(), mMatrix);
-    //       //finger - cone 
-    //       mat4.translate(mMatrix, [0, joint2Rad/2+fingerHeight/2, 0], mMatrix);
-    //       pushMatrix(mMatrix);
-    //         mat4.scale(mMatrix, [fingerRad, fingerHeight, fingerRad], mMatrix);
-    //         mat4.multiply(vMatrix, mMatrix, mvMatrix);
-    //         mat4.inverse(mvMatrix, nMatrix);
-    //         mat4.transpose(nMatrix, nMatrix);
-    //         drawCylinder();
-    //       mat4.set(popMatrix(), mMatrix);  
-    //     mat4.set(popMatrix(), mMatrix);
-    // }
+    // joint2 + Fingers
+    mat4.translate(mMatrix, [0, palmHeight/2+joint2Rad, 0], mMatrix);
+    for (var i = 0; i < fingerCount; i++){
+        var dx = ((i+0.5) / fingerCount - 0.5) / 2;
+        pushMatrix(mMatrix);
+          //joint 2 - sphere
+          mat4.translate(mMatrix, [dx, 0, 0], mMatrix);
+          mat4.multiply(mMatrix, joint2Matrix, mMatrix);
+          pushMatrix(mMatrix);
+            mat4.scale(mMatrix, [joint2Rad, joint2Rad, joint2Rad], mMatrix);
+            mat4.multiply(vMatrix, mMatrix, mvMatrix);
+            mat4.inverse(mvMatrix, nMatrix);
+            mat4.transpose(nMatrix, nMatrix);
+            drawSphere();            
+          mat4.set(popMatrix(), mMatrix);
+          //finger - cone 
+          mat4.translate(mMatrix, [0, joint2Rad/2+fingerHeight/2, 0], mMatrix);
+          pushMatrix(mMatrix);
+            mat4.scale(mMatrix, [fingerRad, fingerHeight, fingerRad], mMatrix);
+            mat4.multiply(vMatrix, mMatrix, mvMatrix);
+            mat4.inverse(mvMatrix, nMatrix);
+            mat4.transpose(nMatrix, nMatrix);
+            drawCylinder();
+          mat4.set(popMatrix(), mMatrix);  
+        mat4.set(popMatrix(), mMatrix);
+    }
 }
 
 var matrixStack = [];
