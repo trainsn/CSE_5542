@@ -12,18 +12,24 @@
 <!--  ************** Fragment Shader ************* --> 
 <script id="shader-fs" type="x-shader/x-fragment">
     precision mediump float;
+    precision mediump int;
 
     uniform vec4 ambient_coef;
     uniform vec4 diffuse_coef;
     uniform vec4 specular_coef;
     uniform vec4 light_color;
     uniform float mat_shininess;  
+    uniform int use_texture;
+    uniform sampler2D myTexture;
 
     varying vec3 v_normal; 
     varying vec3 light_vector; // light vector in eye
     varying vec3 eye_vector;  
+    varying vec2  texCoord;
 
     void main(void) {
+        vec4 texColor = texture2D(myTexture, texCoord);
+
         vec3 v = normalize(v_normal);
         vec3 l = normalize(light_vector);
         vec3 e = normalize(eye_vector);
@@ -42,8 +48,8 @@
         else 
             specular = vec4(0,0,0,1);
 
-        gl_FragColor = ambient+diffuse+specular;
-        // gl_FragColor = ambient+diffuse;
+        // gl_FragColor = (ambient+diffuse)*texColor + specular;
+        gl_FragColor = texColor;
         // gl_FragColor = vec4(v_normal,  1.0);
     }
 </script>
@@ -52,6 +58,7 @@
 <script id="shader-vs" type="x-shader/x-vertex">
     attribute vec3 aVertexPosition;
     attribute vec3 aVertexNormal;
+    attribute vec2 aVertexTexCoords;
 
     uniform mat4 uMVMatrix; 
     uniform mat4 uVMatrix;
@@ -61,9 +68,12 @@
   
     varying vec3 v_normal; 
     varying vec3 light_vector; // light vector in eye
-    varying vec3 eye_vector;  
+    varying vec3 eye_vector; 
+    varying vec2 texCoord;
 
     void main(void) {    
+        texCoord = aVertexTexCoords;
+
         // transform light pos from world to eye space  
         vec4 light_pos_in_eye = uVMatrix*light_pos;
 
