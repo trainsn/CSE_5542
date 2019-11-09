@@ -103,10 +103,10 @@ function initTextures() {
     sampleTexture.image.onload = function(){
         handleTextureLoaded(sampleTexture);
     }
-    sampleTexture.image.src = "model//teddy.jpg";
+    sampleTexture.image.src = "model//panda.jpg";
     console.log("loading texture....")
 }
-
+21
 function handleTextureLoaded(texture) {
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, texture.image);
@@ -475,7 +475,7 @@ function createSphere(rad, nSlice=20, nStack = 20) {
 }
 
 function createBuffer() {
-    initJSON("model//teddy");
+    initJSON("model//panda");
     initTextures();
     // initTeapot();
     createCube(1);
@@ -645,9 +645,13 @@ function drawScene() {
     gl.viewport(0, 0, gl.viewportWidth, gl.viweportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    if (poohVertexPositionBuffer == null || poohVertexNormalBuffer == null || poohVertexIndexBuffer == null){
+    if (poohVertexPositionBuffer == null || poohVertexTextureCoordBuffer == null
+        || poohVertexNormalBuffer == null || poohVertexIndexBuffer == null ){
         return;
     }
+
+    if (sampleTexture == null)
+        return;
 
     // set up lighting 
     gl.uniform4f(shaderProgram.light_posUniform, light_pos[0], light_pos[1], light_pos[2], light_pos[3]);
