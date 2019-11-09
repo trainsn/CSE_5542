@@ -24,13 +24,17 @@
     varying vec3 eye_vector;  
 
     void main(void) {
+        vec3 v = normalize(v_normal);
+        vec3 l = normalize(light_vector);
+        vec3 e = normalize(eye_vector);
+
         vec4 ambient = ambient_coef * light_color;
 
-        float ndotl = max(dot(v_normal, light_vector), 0.0);
+        float ndotl = max(dot(v, l), 0.0);
         vec4 diffuse = diffuse_coef * light_color * ndotl;
 
-        vec3 R = normalize(vec3(reflect(-light_vector, v_normal)));
-        float rdotv = max(dot(R, eye_vector), 0.0);
+        vec3 R = normalize(vec3(reflect(-l, v)));
+        float rdotv = max(dot(R, e), 0.0);
 
         vec4 specular;
         if (ndotl > 0.0)
@@ -39,7 +43,8 @@
             specular = vec4(0,0,0,1);
 
         gl_FragColor = ambient+diffuse+specular;
-        // gl_FragColor = vec4(v_normal, 1.0);
+        // gl_FragColor = ambient+diffuse;
+        // gl_FragColor = vec4(v_normal,  1.0);
     }
 </script>
 
@@ -58,19 +63,21 @@
     varying vec3 light_vector; // light vector in eye
     varying vec3 eye_vector;  
 
-    void main(void) {        
+    void main(void) {    
+        // transform light pos from world to eye space  
+        vec4 light_pos_in_eye = uVMatrix*light_pos;
+
         // transform normal from local to eye space: normal matrix is the inverse transpose of the modelview matrix 
         v_normal = normalize(vec3(uNMatrix*vec4(aVertexNormal, 0.0)));
 
-        // transform the vertext position to eye space 
+        // transform the vertex position to eye space 
         vec4 eye_pos = uMVMatrix * vec4(aVertexPosition, 1.0); // vertex position in eye space
 
         // eye vector V = e-p, where e is (0,0,0)
         eye_vector = normalize(-vec3(eye_pos));
 
         // light vector in eye space L = l-p 
-        // light_vector = normalize(vec3(light_pos - eye_pos));
-        light_vector = normalize(vec3(uVMatrix*light_pos - eye_pos));
+        light_vector = normalize(vec3(light_pos_in_eye - eye_pos));
 
         gl_Position = uPMatrix*uMVMatrix*vec4(aVertexPosition, 1.0);
         gl_PointSize = 5.0;

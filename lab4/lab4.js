@@ -17,9 +17,12 @@ var CylinderVertexNormalBuffer;
 var SphereVertexPositionBuffer;
 var SphereVertexIndexBuffer;
 var SphereVertexNormalBuffer;
-var loadVertexPositionBuffer;
-var loadVertexNormalBuffer;
-var loadVertexIndexBuffer; 
+var teapotVertexPositionBuffer;
+var teapotVertexNormalBuffer;
+var teapotVertexIndexBuffer; 
+var poohVertexPositionBuffer;
+var poohVertexNormalBuffer;
+var poohVertexIndexBuffer; 
 
 var light_pos = [0.0, 2.5, 0.0, 1.0]; // light pos in eye space 
 var light_size = 0.2;
@@ -29,8 +32,8 @@ var mat_diffuse;
 var mat_specular; 
 var mat_shininess; 
 
-var load_base = 10;
-var load_size = 0.3;
+var pooh_base = 10;
+var pooh_size = 0.3;
 
 //////////// Init OpenGL Context etc. ///////////////
 
@@ -85,19 +88,6 @@ function webGLStart() {
 ///////////////////////////////////////////////////////////
 ///////               Create VBO          /////////////////
 
-function initJSON(){
-    var request = new XMLHttpRequest();
-    request.open("GET", "pooh.json");
-    request.onreadystatechange = 
-      function (){
-          if (request.readyState == 4){
-              console.log("state = " + request.readyState);
-              handleLoaded(JSON.parse(request.responseText));
-          }
-      }
-    request.send();
-}
-
 function initTeapot(){
     var request = new XMLHttpRequest();
     request.open("GET", "teapot.json");
@@ -111,21 +101,57 @@ function initTeapot(){
     request.send();
 }
 
-function handleLoaded(data){
+function handleLoadedTeapot(teapotData){
+    console.log("in handleLoadedTeapot");
+    teapotVertexPositionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, teapotVertexPositionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(teapotData.vertexPositions), gl.STATIC_DRAW);
+    teapotVertexPositionBuffer.itemSize = 3;
+    teapotVertexPositionBuffer.numItems = teapotData.vertexPositions.length / 3;
+
+    teapotVertexNormalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, teapotVertexNormalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(teapotData.vertexNormals), gl.STATIC_DRAW);
+    teapotVertexNormalBuffer.itemSize = 3;
+    teapotVertexNormalBuffer.numItems = teapotData.vertexNormals.length / 3;
+
+    teapotVertexIndexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, teapotVertexIndexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(teapotData.indices), gl.STATIC_DRAW);
+    teapotVertexIndexBuffer.itemSize = 1;
+    teapotVertexIndexBuffer.numItems = teapotData.indices.length;
+
+    drawScene();
+}
+
+function initJSON(name){
+    var request = new XMLHttpRequest();
+    request.open("GET", name+".json");
+    request.onreadystatechange = 
+      function (){
+          if (request.readyState == 4){
+              console.log("state = " + request.readyState);
+              handleLoaded(JSON.parse(request.responseText), name);
+          }
+      }
+    request.send();
+}
+
+function handleLoaded(data, name){
     console.log("int handleLoaded");
     var vertices = [];
     for (var i = 0; i < data.vertices.length; i++){
-        vertices.push(data.vertices[i] * load_size);
+        vertices.push(data.vertices[i] * pooh_size);
     }
     for (var i = 0; i < vertices.length; i+=3){
-        if (vertices[i+1] < load_base)
-            load_base = vertices[i+1];
+        if (vertices[i+1] < pooh_base)
+            pooh_base = vertices[i+1];
     }
-    loadVertexPositionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, loadVertexPositionBuffer);
+    poohVertexPositionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, poohVertexPositionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-    loadVertexPositionBuffer.itemSize = 3;
-    loadVertexPositionBuffer.numItems = vertices.length / 3;
+    poohVertexPositionBuffer.itemSize = 3;
+    poohVertexPositionBuffer.numItems = vertices.length / 3;
 
     var indices = [];
     for (var i = 0; i < data.faces.length; i += 11){
@@ -133,11 +159,11 @@ function handleLoaded(data){
         indices.push(data.faces[i+2]);
         indices.push(data.faces[i+3]);
     }
-    loadVertexIndexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, loadVertexIndexBuffer);
+    poohVertexIndexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, poohVertexIndexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
-    loadVertexIndexBuffer.itemSize = 1;
-    loadVertexIndexBuffer.numItems = indices.length;
+    poohVertexIndexBuffer.itemSize = 1;
+    poohVertexIndexBuffer.numItems = indices.length;
 
     var normals = [];
     for (var i = 0; i < data.vertices.length; i++){
@@ -166,11 +192,11 @@ function handleLoaded(data){
         normals[indices[i+1]*3] += nn[0];  normals[indices[i+1]*3+1] += nn[1]; normals[indices[i+1]*3+2] += nn[2];
         normals[indices[i+2]*3] += nn[0];  normals[indices[i+2]*3+1] += nn[1]; normals[indices[i+2]*3+2] += nn[2];
     }
-    loadVertexNormalBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, loadVertexNormalBuffer);
+    poohVertexNormalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, poohVertexNormalBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
-    loadVertexNormalBuffer.itemSize = 3;
-    loadVertexNormalBuffer.numItems = normals.length / 3;
+    poohVertexNormalBuffer.itemSize = 3;
+    poohVertexNormalBuffer.numItems = normals.length / 3;
 
     drawScene();
 }
@@ -179,69 +205,51 @@ function vector(a, b){
     return [-a[0]+b[0], -a[1]+b[1], -a[2]+b[2]];
 }
 
-function handleLoadedTeapot(teapotData){
-    console.log("in handleLoadedTeapot");
-    loadVertexPositionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, loadVertexPositionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(teapotData.vertexPositions), gl.STATIC_DRAW);
-    loadVertexPositionBuffer.itemSize = 3;
-    loadVertexPositionBuffer.numItems = teapotData.vertexPositions.length / 3;
-
-    loadVertexNormalBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, loadVertexNormalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(teapotData.vertexNormals), gl.STATIC_DRAW);
-    loadVertexNormalBuffer.itemSize = 3;
-    loadVertexNormalBuffer.numItems = teapotData.vertexNormals.length / 3;
-
-    loadVertexIndexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, loadVertexIndexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(teapotData.indices), gl.STATIC_DRAW);
-    loadVertexIndexBuffer.itemSize = 1;
-    loadVertexIndexBuffer.numItems = teapotData.indices.length;
-
-    drawScene();
-}
 
 function createCube(size){  
     var rad = size / 2; 
     var vertices = [
-          rad, rad, -rad,
-          -rad, rad, -rad,
-          -rad, -rad, -rad,
-          rad, -rad, -rad, 
-          rad, rad, rad,
-          -rad, rad, rad,
-          -rad, -rad, rad,
-          rad, -rad, rad, 
+          rad, rad, rad,    -rad, rad, rad,     -rad, -rad, rad,    rad, -rad, rad, //v0, v1, v2, v3 front 
+          rad, rad, rad,    rad, -rad, rad,     rad, -rad, -rad,    rad, rad, -rad, //v0, v3, v4, v5 right
+          rad, -rad, -rad,  rad, rad, -rad,     -rad, rad, -rad,    -rad,-rad,-rad,// v4, v5, v6, v7 back
+          -rad, rad, rad,   -rad, -rad, rad,    -rad, rad, -rad,    -rad, -rad, -rad,// v1, v2, v6, v7 left
+          rad, rad, rad,    -rad, rad, rad,     rad, rad, -rad,     -rad, rad, -rad, // v0, v1, v5, v6 up 
+          -rad, -rad, rad,  rad, -rad, rad,     rad, -rad, -rad,    -rad, -rad, -rad// v2, v3, v4, v7 bottom 
     ];
     CubeVertexPositionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, CubeVertexPositionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
     CubeVertexPositionBuffer.itemSize = 3;
-    CubeVertexPositionBuffer.numItems = 8;
-
-    var indices = [0,2,1, 0,2,3, 0,3,7, 0,7,4, 6,2,3, 6,3,7, 5,1,2, 5,2,6, 5,1,0, 5,0,4, 5,6,7, 5,7,4];
-    CubeVertexIndexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, CubeVertexIndexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
-    CubeVertexIndexBuffer.itemSize = 1;
-    CubeVertexIndexBuffer.numItems = 36;
+    CubeVertexPositionBuffer.numItems = 24;
 
     var normals = [
-          rad, rad, -rad,
-          -rad, rad, -rad,
-          -rad, -rad, -rad,
-          rad, -rad, -rad, 
-          rad, rad, rad,
-          -rad, rad, rad,
-          -rad, -rad, rad,
-          rad, -rad, rad,
+          0.0, 0.0, 1.0,    0.0, 0.0, 1.0,     0.0, 0.0, 1.0,   0.0, 0.0, 1.0,  //v0, v1, v2, v3 front 
+          1.0, 0.0, 0.0,    1.0, 0.0, 0.0,     1.0, 0.0, 0.0,   1.0, 0.0, 0.0,  //v0, v3, v4, v5 right
+          0.0, 0.0, -1.0,   0.0, 0.0, -1.0,    0.0, 0.0, -1.0,  0.0, 0.0, -1.0,  // v4, v5, v6, v7 back
+          -1.0, 0.0, 0.0,   -1.0, 0.0, 0.0,    -1.0, 0.0, 0.0,  -1.0, 0.0, 0.0, // v1, v2, v6, v7 left
+          0.0, 1.0, 0.0,    0.0, 1.0, 0.0,     0.0, 1.0, 0.0,   0.0, 1.0, 0.0,  // v0, v1, v5, v6 up
+          0.0, -1.0, 0.0,   0.0, -1.0, 0.0,    0.0, -1.0, 0.0,  0.0, -1.0, 0.0,// v2, v3, v4, v7 bottom 
     ];
     CubeVertexNormalBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, CubeVertexNormalBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
     CubeVertexNormalBuffer.itemSize = 3;
-    CubeVertexNormalBuffer.numItems = 8;
+    CubeVertexNormalBuffer.numItems = 24;
+
+    var indices = [
+        0, 1, 2,        0, 2, 3, //front
+        4, 5, 6,        4, 6, 7, //right
+        8, 10, 9,       8, 11, 10, //back
+        12, 14, 15,     12, 15, 13, //left
+        16, 19, 18,     16, 17, 19, //up 
+        // 16, 16, 16,     16, 16, 16,
+        20, 23, 22,     20, 22, 21  //bottom
+    ];
+    CubeVertexIndexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, CubeVertexIndexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+    CubeVertexIndexBuffer.itemSize = 1;
+    CubeVertexIndexBuffer.numItems = 36;
 }
 
 function createCylinder(tRad, bRad, height, nSlice = 30, nStack = 1){
@@ -254,6 +262,7 @@ function createCylinder(tRad, bRad, height, nSlice = 30, nStack = 1){
     var rStep = (bRad - tRad) / nStack;
 
     // vertrices and normals 
+    // side 
     for (var i = 0; i < nSlice; i++){
         var a = i * aStep;
         for (var j = 0; j <= nStack; j++){
@@ -268,32 +277,69 @@ function createCylinder(tRad, bRad, height, nSlice = 30, nStack = 1){
             normals.push(Math.sin(a));
         }
     } 
+    // bottom 
+    for (var i=0; i < nSlice; i++){
+        var a = i * aStep;
+        vertices.push(r * Math.cos(a));
+        vertices.push(-height/2);
+        vertices.push(r * Math.sin(a));
+
+        normals.push(0.0);
+        normals.push(-1.0);
+        normals.push(0.0);
+    }
+    // up
+    for (var i=0; i < nSlice; i++){
+        var a = i * aStep;
+        vertices.push(r * Math.cos(a));
+        vertices.push(height/2);
+        vertices.push(r * Math.sin(a));
+
+        normals.push(0.0);
+        normals.push(1.0);
+        normals.push(0.0);
+    }
+
 
     CylinderVertexPositionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, CylinderVertexPositionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
     CylinderVertexPositionBuffer.itemSize = 3;
-    CylinderVertexPositionBuffer.numItems = nSlice * (nStack+1);
+    CylinderVertexPositionBuffer.numItems = nSlice * (nStack+3);
 
     CylinderVertexNormalBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, CylinderVertexNormalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
     CylinderVertexNormalBuffer.itemSize = 3;
-    CylinderVertexNormalBuffer.numItems = nSlice * (nStack+1);
+    CylinderVertexNormalBuffer.numItems = nSlice * (nStack+3);
 
-    //indices 8
+    // indices 
+    // side
     for (var i = 0; i < nSlice; i++){
         var start = i * (nStack+1);
         var next = (i+1)%nSlice * (nStack+1);
-
-        // bottom face & top face 
-        indices.push(0, start, next);
-        indices.push(nStack, start+nStack, next+nStack);  
+ 
         // side face
         for (var j = 0; j <= nStack; j++){
             indices.push(start+j, next+j, start+j+1);
             indices.push(start+j+1, next+j+1, next+j);
         }
+    }
+
+    // bottom 
+    for (var i = 0; i < nSlice; i++){
+        var origin = nSlice * (nStack+1);
+        var start = nSlice * (nStack+1) + i;
+        var next = nSlice * (nStack+1) + (i+1) % nSlice;
+        indices.push(origin, start, next);
+    }
+
+    // up 
+    for (var i = 0; i < nSlice; i++){
+        var origin = nSlice * (nStack+2);
+        var start = nSlice * (nStack+2) + i;
+        var next = nSlice * (nStack+2) + (i+1) % nSlice;
+        indices.push(origin, start, next);
     }
 
     CylinderVertexIndexBuffer = gl.createBuffer();
@@ -368,7 +414,7 @@ function createSphere(rad, nSlice=20, nStack = 20) {
 }
 
 function createBuffer() {
-    initJSON();
+    initJSON("pooh");
     // initTeapot();
     createCube(1);
     createCylinder(1, 1, 1);
@@ -400,7 +446,7 @@ var wheelCount = 8;
 var wheelRad = carLength / wheelCount / 2;
 var wheelHeight = 0.3;
 // ground cube 
-var groundWidth = 20.0;
+var groundWidth = 200.0;
 var groundHeight = 0.05;
 
 // base cylinder 
@@ -487,16 +533,16 @@ function drawSphere(){
 }
 
 function drawLoaded(){
-    gl.bindBuffer(gl.ARRAY_BUFFER, loadVertexPositionBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, loadVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, poohVertexPositionBuffer);
+    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, poohVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, loadVertexNormalBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, loadVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, poohVertexNormalBuffer);
+    gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, poohVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, loadVertexIndexBuffer);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, poohVertexIndexBuffer);
 
     setMatrixUniforms();
-    gl.drawElements(gl.TRIANGLES, loadVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+    gl.drawElements(gl.TRIANGLES, poohVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 }
 
 
@@ -513,7 +559,7 @@ function drawScene() {
     gl.viewport(0, 0, gl.viewportWidth, gl.viweportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    if (loadVertexPositionBuffer == null || loadVertexNormalBuffer == null || loadVertexIndexBuffer == null){
+    if (poohVertexPositionBuffer == null || poohVertexNormalBuffer == null || poohVertexIndexBuffer == null){
         return;
     }
 
@@ -549,7 +595,7 @@ function drawScene() {
     mat_ambient = [0.0, 0.15, 0, 1]; 
     mat_diffuse= [0.0, 0.2, 0, 1]; 
     mat_specular = [0.5, 0.5, 0.5, 1]; 
-    mat_shininess = [5.0]; 
+    mat_shininess = [50.0]; 
     setMat();
 
     pushMatrix(mMatrix);
@@ -611,7 +657,7 @@ function drawScene() {
       // mat4.set(popMatrix(), mMatrix); 
     mat4.set(popMatrix(), mMatrix);
 
-    // cylinder base 
+    // // cylinder base 
     mat4.translate(mMatrix, [0, baseHeight/2, 0], mMatrix);
     pushMatrix(mMatrix);
       mat4.scale(mMatrix, [baseRad, baseHeight, baseRad], mMatrix);
@@ -629,7 +675,7 @@ function drawScene() {
     setMat();
 
     pushMatrix(mMatrix);
-      mat4.translate(mMatrix, [0, -load_base+baseHeight/2, baseRad*2/3], mMatrix);
+      mat4.translate(mMatrix, [0, -pooh_base+baseHeight/2, baseRad*2/3], mMatrix);
       mat4.rotate(mMatrix, degToRad(90.0), [0,1,0], mMatrix);
 
       mat4.multiply(vMatrix, mMatrix, mvMatrix);
