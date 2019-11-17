@@ -88,6 +88,7 @@ function webGLStart() {
     shaderProgram.vMatrixUniform = gl.getUniformLocation(shaderProgram, "uVMatrix");
     shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
     shaderProgram.nMatrixUniform = gl.getUniformLocation(shaderProgram, "uNMatrix");
+    shaderProgram.v2wMatrixUniform = gl.getUniformLocation(shaderProgram, "uV2WMatrix");
 
     shaderProgram.light_posUniform = gl.getUniformLocation(shaderProgram, "light_pos");
     shaderProgram.light_colorUniform = gl.getUniformLocation(shaderProgram, "light_color");
@@ -97,6 +98,8 @@ function webGLStart() {
     shaderProgram.shininess_coefUniform = gl.getUniformLocation(shaderProgram, "mat_shininess");
  
     initCubeMap();
+    shaderProgram.cubeMap_textureUniform = gl.getUniformLocation(shaderProgram, "cubeMap");
+
 
     initTextures();
     shaderProgram.textureUniform = gl.getUniformLocation(shaderProgram, "myTexture");
@@ -186,47 +189,37 @@ function initCubeMap(){
     cubemapTexture.px.onload = function(){
         handleCubemapTextureLoaded(cubemapTexture, 'px');
     }
-    cubemapTexture.px.src = "skybox/museum/posx.jpg";
+    cubemapTexture.px.src = "skybox/Areskutan/posx.jpg";
 
     cubemapTexture.nx = new Image();
     cubemapTexture.nx.onload = function(){
         handleCubemapTextureLoaded(cubemapTexture, 'nx');
     }
-    cubemapTexture.nx.src = "skybox/museum/negx.jpg";
-    // cubemapTexture.nxx = gl.createTexture();
-    // cubemapTexture.nxx.image = cubemapTexture.nx;
+    cubemapTexture.nx.src = "skybox/Areskutan/negx.jpg";
 
     cubemapTexture.py = new Image();
     cubemapTexture.py.onload = function(){
         handleCubemapTextureLoaded(cubemapTexture, 'py');
     }
-    cubemapTexture.py.src = "skybox/museum/posy.jpg";
-    // cubemapTexture.pyy = gl.createTexture();
-    // cubemapTexture.pyy = cubemapTexture.py;
+    cubemapTexture.py.src = "skybox/Areskutan/posy.jpg";
 
     cubemapTexture.ny = new Image();
     cubemapTexture.ny.onload = function(){
         handleCubemapTextureLoaded(cubemapTexture, 'ny');
     }
-    cubemapTexture.ny.src = "skybox/museum/negy.jpg";
-    // cubemapTexture.nyy = gl.createTexture();
-    // cubemapTexture.nyy = cubemapTexture.ny;
+    cubemapTexture.ny.src = "skybox/Areskutan/negy.jpg";
 
     cubemapTexture.pz = new Image();
     cubemapTexture.pz.onload = function(){
         handleCubemapTextureLoaded(cubemapTexture, 'pz');
     }
-    cubemapTexture.pz.src = "skybox/museum/posz.jpg";
-    // cubemapTexture.pzz = gl.createTexture();
-    // cubemapTexture.pzz = cubemapTexture.pz;
+    cubemapTexture.pz.src = "skybox/Areskutan/posz.jpg";
 
     cubemapTexture.nz = new Image();
     cubemapTexture.nz.onload = function(){
         handleCubemapTextureLoaded(cubemapTexture, 'nz');
     }
-    cubemapTexture.nz.src = "skybox/museum/negz.jpg";
-    // cubemapTexture.nzz = gl.createTexture();
-    // cubemapTexture.nzz = cubemapTexture.nz;
+    cubemapTexture.nz.src = "skybox/Areskutan/negz.jpg";
 
     console.log("loading cubemap texture...");
 }
@@ -253,12 +246,14 @@ function handleCubemapTextureLoaded(texture, type){
         case 'pz':
             gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_Z, 0, gl.RGB, gl.RGB,
                 gl.UNSIGNED_BYTE, texture.pz);
+            break;
         case 'nz':
             gl.texImage2D(gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, gl.RGB, gl.RGB,
                 gl.UNSIGNED_BYTE, texture.nz);
+            break;
     } 
-    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WARP_S, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WARP_T, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.REPEAT);
     gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     textureLoaded++;
@@ -644,6 +639,7 @@ var mMatrix = mat4.create();
 var mvMatrix = mat4.create();
 var pMatrix = mat4.create();
 var nMatrix = mat4.create();
+var v2wMatrix = mat4.create();  // eye space to world space matrix 
 var third_vMatrix = mat4.create();
 var first_vMatrix = mat4.create();
 var front_incre = 0.0;
@@ -693,7 +689,7 @@ var yawMatrix = mat4.create();
 var pitchMatrix = mat4.create();
 var rollMatrix = mat4.create();
 // Model to View 
-mat4.lookAt([20,0,0], [0,0,0], [0,1,0], third_vMatrix);
+mat4.lookAt([10,0,0], [0,0,0], [0,1,0], third_vMatrix);
 mat4.lookAt([0,baseHeight+arm1Height+joint1Rad,baseRad], [0,baseHeight+arm1Height+joint1Rad,0], [0,1,0], first_vMatrix);
 mat4.set(third_vMatrix, vMatrix);
 var camera_mode = 3;
@@ -705,11 +701,13 @@ function setMatrixUniforms(){
     mat4.multiply(vMatrix, mMatrix, mvMatrix);
     mat4.inverse(mvMatrix, nMatrix);
     mat4.transpose(nMatrix, nMatrix);
+    mat4.inverse(vMatrix, v2wMatrix);
 
     gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
     gl.uniformMatrix4fv(shaderProgram.vMatrixUniform, false, vMatrix);
     gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
     gl.uniformMatrix4fv(shaderProgram.nMatrixUniform, false, nMatrix);
+    gl.uniformMatrix4fv(shaderProgram.v2wMatrixUniform, false, v2wMatrix);
 }
 
 function drawCube(){
@@ -731,6 +729,10 @@ function drawCube(){
     gl.bindTexture(gl.TEXTURE_2D, choosenTexture);   // bind the texture object to the texture unit 
     gl.uniform1i(shaderProgram.textureUniform, 0);  // pass the texture unit to the shader
 
+    gl.activeTexture(gl.TEXTURE1);  // set texture unit 1 to use
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubemapTexture);    // bind the texture object to the texture unit 
+    gl.uniform1i(shaderProgram.cubeMap_textureUniform, 1);  // pass the texture unit to the shader
+
     gl.drawElements(gl.TRIANGLES, CubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 }
 
@@ -747,7 +749,11 @@ function drawCylinder(){
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, CylinderVertexIndexBuffer);
 
     setMatrixUniforms();
+
     gl.uniform1i(shaderProgram.use_textureUniform, use_texture);
+    gl.activeTexture(gl.TEXTURE1);  // set texture unit 1 to use
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubemapTexture);    // bind the texture object to the texture unit 
+    gl.uniform1i(shaderProgram.cubeMap_textureUniform, 1);  // pass the texture unit to the shader
 
     gl.drawElements(gl.TRIANGLES, CylinderVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 }
@@ -765,7 +771,11 @@ function drawSphere(){
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, SphereVertexIndexBuffer);
     
     setMatrixUniforms();
+
     gl.uniform1i(shaderProgram.use_textureUniform, use_texture);
+    gl.activeTexture(gl.TEXTURE1);  // set texture unit 1 to use
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubemapTexture);    // bind the texture object to the texture unit 
+    gl.uniform1i(shaderProgram.cubeMap_textureUniform, 1);  // pass the texture unit to the shader
 
     gl.drawElements(gl.TRIANGLES, SphereVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 }
@@ -788,6 +798,10 @@ function drawLoaded(){
     gl.activeTexture(gl.TEXTURE0);    // set texture unit 0 to use 
     gl.bindTexture(gl.TEXTURE_2D, choosenTexture);   // bind the texture object to the texture unit 
     gl.uniform1i(shaderProgram.textureUniform, 0);  // pass the texture unit to the shader
+
+    gl.activeTexture(gl.TEXTURE1);  // set texture unit 1 to use
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubemapTexture);    // bind the texture object to the texture unit 
+    gl.uniform1i(shaderProgram.cubeMap_textureUniform, 1);  // pass the texture unit to the shader
 
     gl.drawElements(gl.TRIANGLES, poohVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 }
@@ -819,9 +833,9 @@ function drawScene() {
     gl.uniform4f(shaderProgram.light_colorUniform, light_color[0], light_color[1], light_color[2], light_color[3]);
     
     // draw skybox 
-    drawSkybox()
+    drawSkybox();
     // drawLightSource();
-    // drawTank();
+    drawTank();
 }
 
 function drawSkybox(){
@@ -890,7 +904,7 @@ function drawLightSource(){
 
 function drawTank(){
     mat4.identity(mMatrix); 
-    use_texture = 0;
+    use_texture = 3;
     // global move
     mat4.translate(mMatrix, [left_incre, 0, front_incre], mMatrix);
     createCylinder(1, 1, 1);
@@ -899,6 +913,9 @@ function drawTank(){
     mat_specular = [0.5, 0.5, 0.5, 1]; 
     mat_shininess = [50.0]; 
     setMaterial();
+
+    // mat4.scale(mMatrix, [3, 3, 3], mMatrix);
+    // drawSphere();
 
     pushMatrix(mMatrix);
       // car cube
@@ -969,7 +986,7 @@ function drawTank(){
     setMaterial(); 
 
     // cylinder base 
-    use_texture = 0;
+    use_texture = 3;
     mat4.translate(mMatrix, [0, baseHeight/2, 0], mMatrix);
     pushMatrix(mMatrix);
       mat4.scale(mMatrix, [baseRad, baseHeight, baseRad], mMatrix);

@@ -19,8 +19,11 @@
     uniform vec4 specular_coef;
     uniform vec4 light_color;
     uniform float mat_shininess;  
+    uniform mat4 uV2WMatrix;    // eye to world
+
     uniform int use_texture;
     uniform sampler2D myTexture;
+    uniform samplerCube cubeMap;
 
     varying vec3 v_normal; 
     varying vec3 light_vector; // light vector in eye
@@ -48,17 +51,21 @@
         else 
             specular = vec4(0,0,0,1);
 
-        if (use_texture ==0){
+        if (use_texture ==0){   // solely light 
             gl_FragColor = (ambient+diffuse) + specular;
         } 
-        else if (use_texture == 1){
+        else if (use_texture == 1){     // blend light and texture 
             gl_FragColor = (ambient+diffuse)*texColor + specular;
         } 
-        else if (use_texture == 2){
+        else if (use_texture == 2){     //solely texture
             gl_FragColor = texColor; 
             // gl_FragColor = vec4(texCoord, 0.0, 1.0);
+        } else if (use_texture == 3){   // environment mapping 
+            vec3 ref = normalize(vec3(reflect(-e, v)));   // eye space 
+            ref = vec3(uV2WMatrix*vec4(ref, 0.0));  // convert to world space 
+            vec4 env_color = textureCube(cubeMap, ref);
+            gl_FragColor = env_color;
         }
-
         // gl_FragColor = vec4(texCoord, 0.0, 1.0);
         // gl_FragColor = vec4(v_normal,  1.0);
     }
