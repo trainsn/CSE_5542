@@ -176,8 +176,7 @@ function handleTextureLoaded(texture) {
     // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WARP_T, gl.REPEAT);
     gl.bindTexture(gl.TEXTURE_2D, null);    // what's that for?
     textureLoaded++; 
-    if (textureLoaded == total_image)
-        drawScene();
+    drawScene();
 }
 
 function initCubeMap(){
@@ -187,13 +186,13 @@ function initCubeMap(){
     cubemapTexture.px.onload = function(){
         handleCubemapTextureLoaded(cubemapTexture, 'px');
     }
-    cubemapTexture.px.src = "skybox/ame_fade/fadeaway_rt.jpg";
+    cubemapTexture.px.src = "skybox/museum/posx.jpg";
 
     cubemapTexture.nx = new Image();
     cubemapTexture.nx.onload = function(){
         handleCubemapTextureLoaded(cubemapTexture, 'nx');
     }
-    cubemapTexture.nx.src = "skybox/ame_fade/fadeaway_lf.jpg";
+    cubemapTexture.nx.src = "skybox/museum/negx.jpg";
     // cubemapTexture.nxx = gl.createTexture();
     // cubemapTexture.nxx.image = cubemapTexture.nx;
 
@@ -201,7 +200,7 @@ function initCubeMap(){
     cubemapTexture.py.onload = function(){
         handleCubemapTextureLoaded(cubemapTexture, 'py');
     }
-    cubemapTexture.py.src = "skybox/ame_fade/fadeaway_up.jpg";
+    cubemapTexture.py.src = "skybox/museum/posy.jpg";
     // cubemapTexture.pyy = gl.createTexture();
     // cubemapTexture.pyy = cubemapTexture.py;
 
@@ -209,7 +208,7 @@ function initCubeMap(){
     cubemapTexture.ny.onload = function(){
         handleCubemapTextureLoaded(cubemapTexture, 'ny');
     }
-    cubemapTexture.ny.src = "skybox/ame_fade/fadeaway_dn.jpg";
+    cubemapTexture.ny.src = "skybox/museum/negy.jpg";
     // cubemapTexture.nyy = gl.createTexture();
     // cubemapTexture.nyy = cubemapTexture.ny;
 
@@ -217,7 +216,7 @@ function initCubeMap(){
     cubemapTexture.pz.onload = function(){
         handleCubemapTextureLoaded(cubemapTexture, 'pz');
     }
-    cubemapTexture.pz.src = "skybox/ame_fade/fadeaway_ft.jpg";
+    cubemapTexture.pz.src = "skybox/museum/posz.jpg";
     // cubemapTexture.pzz = gl.createTexture();
     // cubemapTexture.pzz = cubemapTexture.pz;
 
@@ -225,7 +224,7 @@ function initCubeMap(){
     cubemapTexture.nz.onload = function(){
         handleCubemapTextureLoaded(cubemapTexture, 'nz');
     }
-    cubemapTexture.nz.src = "skybox/ame_fade/fadeaway_bk.jpg";
+    cubemapTexture.nz.src = "skybox/museum/negz.jpg";
     // cubemapTexture.nzz = gl.createTexture();
     // cubemapTexture.nzz = cubemapTexture.nz;
 
@@ -263,8 +262,7 @@ function handleCubemapTextureLoaded(texture, type){
     gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     textureLoaded++;
-    if (textureLoaded == total_image)
-        drawScene();
+    drawScene();
 }
 
 
@@ -303,9 +301,8 @@ function handleLoadedTeapot(teapotData){
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(teapotData.indices), gl.STATIC_DRAW);
     teapotVertexIndexBuffer.itemSize = 1;
     teapotVertexIndexBuffer.numItems = teapotData.indices.length;
-
-    if (textureLoaded == total_image)
-        drawScene();
+    
+    drawScene();
 }
 
 function initJSON(name){
@@ -420,12 +417,12 @@ function createCube(size){
 
 
     var texcoords = [
-        1.0, 0.0,   0.0, 0.0,   0.0, 1.0,  1.0, 1.0, //v0, v1, v2, v3 front 
-        0.0, 0.0,   0.0, 1.0,   1.0, 1.0,  1.0, 0.0, //v0, v3, v4, v5 right
-        0.0, 1.0,   0.0, 0.0,   1.0, 0.0,  1.0, 1.0, // v4, v5, v6, v7 back
-        1.0, 0.0,   1.0, 1.0,   0.0, 0.0,  0.0, 1.0, // v1, v2, v6, v7 left
-        1.0, 0.0,   1.0, 1.0,   0.0, 0.0,  0.0, 1.0, // v0, v1, v5, v6 up 
-        1.0, 0.0,   1.0, 1.0,   0.0, 1.0,  0.0, 0.0// v2, v3, v4, v7 bottom 
+        0.0, 0.0,   1.0, 0.0,   1.0, 1.0,  0.0, 1.0, //v0, v1, v2, v3 front 
+        1.0, 0.0,   1.0, 1.0,   0.0, 1.0,  0.0, 0.0, //v0, v3, v4, v5 right
+        1.0, 1.0,   1.0, 0.0,   0.0, 0.0,  0.0, 1.0, // v4, v5, v6, v7 back
+        0.0, 0.0,   0.0, 1.0,   1.0, 0.0,  1.0, 1.0, // v1, v2, v6, v7 left
+        1.0, 0.0,   0.0, 0.0,   1.0, 1.0,  0.0, 1.0, // v0, v1, v5, v6 up 
+        0.0, 1.0,   1.0, 1.0,   1.0, 0.0,  0.0, 0.0// v2, v3, v4, v7 bottom 
     ];
     CubeVertexTextureCoordBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, CubeVertexTextureCoordBuffer);
@@ -696,7 +693,7 @@ var yawMatrix = mat4.create();
 var pitchMatrix = mat4.create();
 var rollMatrix = mat4.create();
 // Model to View 
-mat4.lookAt([9,4,8], [0,0,0], [0,1,0], third_vMatrix);
+mat4.lookAt([20,0,0], [0,0,0], [0,1,0], third_vMatrix);
 mat4.lookAt([0,baseHeight+arm1Height+joint1Rad,baseRad], [0,baseHeight+arm1Height+joint1Rad,0], [0,1,0], first_vMatrix);
 mat4.set(third_vMatrix, vMatrix);
 var camera_mode = 3;
@@ -814,7 +811,7 @@ function drawScene() {
         return;
     }
 
-    if (textureLoaded < 13)
+    if (textureLoaded < total_image)
         return;
 
     // set up lighting 
@@ -824,7 +821,7 @@ function drawScene() {
     // draw skybox 
     drawSkybox()
     // drawLightSource();
-    drawTank();
+    // drawTank();
 }
 
 function drawSkybox(){
@@ -885,7 +882,8 @@ function drawLightSource(){
 
     pushMatrix(mMatrix);
       mat4.translate(mMatrix, [light_pos[0], light_pos[1], light_pos[2]], mMatrix);
-      mat4.scale(mMatrix, [light_size, light_size, light_size], mMatrix);
+      mat4.scale(mMatrix, [light_size, light_size, light_size]);
+    // lower part: car + wheels e], mMatrix);
       drawSphere();
     mat4.set(popMatrix(), mMatrix); 
 }
@@ -895,7 +893,6 @@ function drawTank(){
     use_texture = 0;
     // global move
     mat4.translate(mMatrix, [left_incre, 0, front_incre], mMatrix);
-    // lower part: car + wheels 
     createCylinder(1, 1, 1);
     mat_ambient = [0.0, 0.15, 0, 1]; 
     mat_diffuse= [0.0, 0.2, 0, 1]; 
