@@ -1,0 +1,131 @@
+
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<title>WebGL &mdash; lab5 </title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">   
+
+<script type="text/javascript" src="glMatrix-0.9.5.min.js"></script>
+
+<!--  ************** Fragment Shader ************* --> 
+<script id="shader-fs" type="x-shader/x-fragment">
+    precision mediump float;
+    precision mediump int;
+
+    uniform vec4 ambient_coef;
+    uniform vec4 diffuse_coef;
+    uniform vec4 specular_coef;
+    uniform vec4 light_color;
+    uniform float mat_shininess;  
+    uniform int use_texture;
+    uniform sampler2D myTexture;
+
+    varying vec3 v_normal; 
+    varying vec3 light_vector; // light vector in eye
+    varying vec3 eye_vector;  
+    varying vec2 texCoord;
+
+    void main(void) {
+        vec4 texColor = texture2D(myTexture, texCoord); 
+
+        vec3 v = normalize(v_normal);
+        vec3 l = normalize(light_vector);
+        vec3 e = normalize(eye_vector);
+
+        vec4 ambient = ambient_coef * light_color;
+
+        float ndotl = max(dot(v, l), 0.0);
+        vec4 diffuse = diffuse_coef * light_color * ndotl;
+
+        vec3 R = normalize(vec3(reflect(-l, v)));
+        float rdotv = max(dot(R, e), 0.0);
+
+        vec4 specular;
+        if (ndotl > 0.0)
+            specular = specular_coef * light_color * pow(rdotv, mat_shininess);
+        else 
+            specular = vec4(0,0,0,1);
+
+        if (use_texture ==0){
+            gl_FragColor = (ambient+diffuse) + specular;
+        } 
+        else if (use_texture == 1){
+            gl_FragColor = (ambient+diffuse)*texColor + specular;
+        } 
+        else if (use_texture == 2){
+            gl_FragColor = texColor; 
+            // gl_FragColor = vec4(texCoord, 0.0, 1.0);
+        }
+
+        // gl_FragColor = vec4(texCoord, 0.0, 1.0);
+        // gl_FragColor = vec4(v_normal,  1.0);
+    }
+</script>
+
+<!--  ************** Vertex Shader ************* --> 
+<script id="shader-vs" type="x-shader/x-vertex">
+    attribute vec3 aVertexPosition;
+    attribute vec3 aVertexNormal;
+    attribute vec2 aVertexTexCoords;
+
+    uniform mat4 uMVMatrix; 
+    uniform mat4 uVMatrix;
+    uniform mat4 uPMatrix;
+    uniform mat4 uNMatrix; // transform normal from local to eye 
+    uniform vec4 light_pos; // light position in eye space 
+  
+    varying vec3 v_normal; 
+    varying vec3 light_vector; // light vector in eye
+    varying vec3 eye_vector; 
+    varying vec2 texCoord;
+
+    void main(void) {    
+        texCoord = aVertexTexCoords;
+
+        // transform light pos from world to eye space  
+        vec4 light_pos_in_eye = uVMatrix*light_pos;
+
+        // transform normal from local to eye space: normal matrix is the inverse transpose of the modelview matrix 
+        v_normal = normalize(vec3(uNMatrix*vec4(aVertexNormal, 0.0)));
+
+        // transform the vertex position to eye space 
+        vec4 eye_pos = uMVMatrix * vec4(aVertexPosition, 1.0); // vertex position in eye space
+
+        // eye vector V = e-p, where e is (0,0,0)
+        eye_vector = normalize(-vec3(eye_pos));
+
+        // light vector in eye space L = l-p 
+        light_vector = normalize(vec3(light_pos_in_eye - eye_pos));
+
+        gl_Position = uPMatrix*uMVMatrix*vec4(aVertexPosition, 1.0);
+        gl_PointSize = 5.0;
+    }
+</script>
+
+<script type="text/javascript" src="shaders_setup.js"></script>
+<script type="text/javascript" src="lab5.js"></script>
+</head>
+
+
+<body onload="webGLStart();">
+    <canvas id="lab5-canvas" style="border: none;" width="600" height="600"></canvas>
+    <p style="float:right">
+        W/S/A/D: move the object forward/backward/left/right</br>
+        ←/→: rotate the gun mount</br>
+        ↑/↓: adjust the elevation angle</br>
+        z/x: rotate the wrist</br>
+        c/v: rotate the finger</br>
+        P/p: look up/down (pitch)</br>
+        Y/y: look left/right (yaw)</br>
+        R/r: let the object move clockwise/counterwise in eye space</br>
+        1: first-person view (image a person stand on the base and can see the gun)</br>
+        3: third-person view</br>
+        I/K/J/L/U/O: move the light source forward/backward/left/right/up/down</br> 
+    </p>
+
+</body>
+
+</html>
+
