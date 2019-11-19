@@ -117,9 +117,9 @@
 
 
 <body onload="webGLStart();">
-    <canvas id="lab5-canvas" style="border: none;" width="600" height="600"></canvas>
-    <div>
-        <p style="float:right">
+    <canvas id="lab5-canvas" style="border: none;" width="800" height="800"></canvas>
+    <div style="float:right">
+        <p >
             W/S/A/D: move the object forward/backward/left/right</br>
             ←/→: rotate the gun mount</br>
             ↑/↓: adjust the elevation angle</br>
@@ -132,17 +132,17 @@
             1: first-person view (image a person stand on the base and can see the gun)</br>
             3: third-person view</br>
             I/K/J/L/U/O: move the light source forward/backward/left/right/up/down</br> 
+            </br>
+            </br>
         </p>
-    </div>
 
-    <div>
         <h4>The mode of the tank</h4>
         <button onclick="ModeTank(0)">lighted_surface</button>
         <button onclick="ModeTank(3)">cubemap</button>
         <h4>
 
         <h4>The mode of the teardrop</h4>
-        <button onclick="ModeTeardrop(1, 0)">lighted_surface</button>
+        <button onclick="ModeTeardrop(0, 0)">lighted_surface</button>
         <button onclick="ModeTeardrop(2, 0)">texture</button>
         <button onclick="ModeTeardrop(3, 0)">cubemap</button>
         <button onclick="ModeTeardrop(0, 1)">wireframe </button>
@@ -152,7 +152,6 @@
         <button onclick="ModeScene(1)">No Animation</button>
         <button onclick="ModeScene(2)">Teardrop Only</button>
     </div>
-
 
 </body>
 </html>

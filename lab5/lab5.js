@@ -332,7 +332,7 @@ function handleCubemapTextureLoaded(texture, type){
 
 ///////////////////////////////////////////////////////////
 ///////               Create VBO          /////////////////
-function createTeardrop(nSlice=20, nStack=20){
+function createTeardrop(nSlice=60, nStack=60){
     var vertices = [];
     var indices = [];
     var normals = [];
@@ -407,12 +407,12 @@ function createTeardrop(nSlice=20, nStack=20){
     teardropVertexNormalBuffer.numItems = (nSlice+1) * (nStack+1);
 
     // indices 
-    for (var j = 0; j < nStack; j++){
+    for (var j = 0; j <= nStack; j++){
         for (var i = 0; i <= nSlice; i++){
             var start = j * nSlice + i;
             var next = j * nSlice + (i+1); 
-            indices.push(start, next, start+nSlice+1);
-            indices.push(next, start+nSlice+1, next+nSlice+1);
+            indices.push(start+nSlice+1, start, next);
+            indices.push(next, next+nSlice+1, start+nSlice+1);
         }
     }
 
@@ -913,7 +913,7 @@ function drawTeardrop(){
     if (teardrop_geom_mode == 0)
         gl.drawElements(gl.TRIANGLES, teardropVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
     else if (teardrop_geom_mode == 1){
-        gl.drawElements(gl.LINE_LOOP, teardropVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(gl.LINE_STRIP, teardropVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
     }
 }
 
