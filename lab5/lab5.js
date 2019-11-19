@@ -77,6 +77,7 @@ var fingerHeight = 0.6;
 var fingerRad  = 0.05;
 var fingerCount = 1;
 
+var move_step = 0.03;
 var angle_step = 3.0;
 var arm1Yangle = 0.0;
 var joint1Xangle = -45.0;
@@ -89,6 +90,8 @@ var robot_base = 10;
 var robot_size = 0.3;
 var attack_base = 0.2;
 var attack_size = 0.3;
+var attack_finished = -1.5;
+var attack_bound = -5.0;
 
 var modelTexture;
 var tearTexture;
@@ -102,6 +105,12 @@ var choosenTexture;
 var cubemapTexture;
 var textureLoaded = 0;
 var use_texture;
+var tank_texture_mode = 0;
+var teardrop_texture_mode = 3;
+var teardrop_geom_mode = 0;
+var robot_texture_mode = 1;
+
+var scene_mode = 0; 
 
 var total_image = 14;
 
@@ -759,8 +768,9 @@ var first_vMatrix = mat4.create();
 var yawMatrix = mat4.create();
 var pitchMatrix = mat4.create();
 var rollMatrix = mat4.create();
+var cameraFrontMatrix = mat4.create();
 // Model to View 
-mat4.lookAt([9,6,8], [0,0,0], [0,1,0], third_vMatrix);
+mat4.lookAt([3,2,4], [0,0,0], [0,1,0], third_vMatrix);
 mat4.lookAt([0,baseHeight+arm1Height+joint1Rad,baseRad], [0,baseHeight+arm1Height+joint1Rad,0], [0,1,0], first_vMatrix);
 mat4.set(third_vMatrix, vMatrix);
 var camera_mode = 3;
@@ -900,7 +910,11 @@ function drawTeardrop(){
     gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubemapTexture);    // bind the texture object to the texture unit 
     gl.uniform1i(shaderProgram.cubeMap_textureUniform, 1);  // pass the texture unit to the shader
 
-    gl.drawElements(gl.TRIANGLES, teardropVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+    if (teardrop_geom_mode == 0)
+        gl.drawElements(gl.TRIANGLES, teardropVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+    else if (teardrop_geom_mode == 1){
+        gl.drawElements(gl.LINE_LOOP, teardropVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+    }
 }
 
 
@@ -939,6 +953,9 @@ function drawScene() {
     var elapsed = (now - g_last) / 1000; // second
     g_last = now; 
     attackX = attackX - elapsed;
+    if (attackX < attack_bound)
+        attackX -= 2 * attack_bound; 
+    // attackX = 2;
  
     // set up lighting 
     gl.uniform4f(shaderProgram.light_posUniform, light_pos[0], light_pos[1], light_pos[2], light_pos[3]);
@@ -946,16 +963,19 @@ function drawScene() {
     
     // draw skybox 
     drawSkybox();
-    drawLightSource();
-    drawTank();
+    if (scene_mode != 2){
+        drawLightSource();
+        drawTank(attackX);
+    }
     drawAttack(attackX);
 
     // Call drawScene again next frame
-    // requestAnimationFrame(drawScene);
+    if (scene_mode == 0)
+        requestAnimationFrame(drawScene);
 }
 
 function drawAttack(attackX){
-    use_texture = 0;
+    use_texture = teardrop_texture_mode;
     mat_ambient = [0.15, 0.15, 0.15, 1]; 
     mat_diffuse= [0.2, 0.2, 0.2, 1]; 
     mat_specular = [0.5, 0.5, 0.5, 1]; 
@@ -969,25 +989,35 @@ function drawAttack(attackX){
     var adjustAngle = Math.atan(dydx)
 
     mat4.identity(mMatrix); 
-    mat4.translate(mMatrix, [left_incre, 0, front_incre], mMatrix);
-    mat4.translate(mMatrix, [attackX, attackY-attack_base, 0], mMatrix);
-    mat4.scale(mMatrix, [.3, .3, .3], mMatrix);
-    mat4.rotate(mMatrix,  degToRad(90.0)+adjustAngle, [0, 0, 1], mMatrix);
+    if (scene_mode != 2){
+        mat4.translate(mMatrix, [left_incre, 0, front_incre], mMatrix);
+        mat4.translate(mMatrix, [attackX, attackY-attack_base, 0], mMatrix);
+        mat4.scale(mMatrix, [.3, .3, .3], mMatrix);
+        mat4.rotate(mMatrix,  degToRad(90.0)+adjustAngle, [0, 0, 1], mMatrix);
+    }
     drawTeardrop();
 }
 
-function drawTank(){
+function drawTank(attackX){
     mat4.identity(mMatrix); 
-    use_texture = 0;
+    use_texture = tank_texture_mode;
+
+    if (attackX > attack_finished){
+        mat_ambient = [0, 0.15, 0, 1]; 
+        mat_diffuse= [0.0, 0.2, 0, 1]; 
+        mat_specular = [0.5, 0.5, 0.5, 1]; 
+        mat_shininess = [50.0]; 
+    } else {
+        mat_ambient = [0.15, 0, 0, 1]; 
+        mat_diffuse= [0.2, 0, 0, 1]; 
+        mat_specular = [0.5, 0.5, 0.5, 1]; 
+        mat_shininess = [50.0]; 
+    }
+    setMaterial();
+    
     // global move
     mat4.translate(mMatrix, [left_incre, 0, front_incre], mMatrix);
     createCylinder(1, 1, 1);
-
-    mat_ambient = [0, 0.15, 0, 1]; 
-    mat_diffuse= [0.0, 0.2, 0, 1]; 
-    mat_specular = [0.5, 0.5, 0.5, 1]; 
-    mat_shininess = [50.0]; 
-    setMaterial();
 
     pushMatrix(mMatrix);
       // car cube
@@ -1042,7 +1072,7 @@ function drawTank(){
     mat_specular = [.2, .2, .2, 1]; 
     mat_shininess = [50.0]; 
     setMaterial();
-    use_texture = 1;
+    use_texture = robot_texture_mode;
     choosenTexture = modelTexture;
 
     pushMatrix(mMatrix);
@@ -1051,14 +1081,21 @@ function drawTank(){
       drawLoaded();
     mat4.set(popMatrix(), mMatrix);
 
-    mat_ambient = [0.0, 0.15, 0, 1]; 
-    mat_diffuse= [0.0, 0.2, 0, 1]; 
-    mat_specular = [0.5, 0.5, 0.5, 1]; 
-    mat_shininess = [50.0]; 
+    if (attackX > attack_finished){
+        mat_ambient = [0, 0.15, 0, 1]; 
+        mat_diffuse= [0.0, 0.2, 0, 1]; 
+        mat_specular = [0.5, 0.5, 0.5, 1]; 
+        mat_shininess = [50.0]; 
+    } else {
+        mat_ambient = [0.15, 0, 0, 1]; 
+        mat_diffuse= [0.2, 0, 0, 1]; 
+        mat_specular = [0.5, 0.5, 0.5, 1]; 
+        mat_shininess = [50.0]; 
+    }
     setMaterial(); 
 
     // cylinder base 
-    use_texture = 0;
+    use_texture = tank_texture_mode;
     mat4.translate(mMatrix, [0, baseHeight/2, 0], mMatrix);
     pushMatrix(mMatrix);
       mat4.scale(mMatrix, [baseRad, baseHeight, baseRad], mMatrix);
@@ -1204,22 +1241,22 @@ function popMatrix(){
       switch(event.keyCode)  {
           case 87:
               console.log('enter W');
-              front_incre -= 0.03;
+              front_incre -= move_step;
               drawScene();
               break;
           case 83:
               console.log('enter S');
-              front_incre += 0.03;
+              front_incre += move_step;
               drawScene();
               break;
           case 65:
               console.log('enter A');
-              left_incre -= 0.03;
+              left_incre -= move_step;
               drawScene();
               break;
           case 68:
               console.log('enter D');
-              left_incre += 0.03;
+              left_incre += move_step;
               drawScene();
               break;
           case 73:
@@ -1351,6 +1388,23 @@ function popMatrix(){
                   mat4.set(vMatrix, third_vMatrix);
               drawScene();
               break;
+          case 70:
+              mat4.identity(cameraFrontMatrix);
+              if (event.shiftKey) {
+                    console.log('enter F, look front');
+                    mat4.translate(cameraFrontMatrix, [0, 0, move_step], cameraFrontMatrix);
+              } 
+              else {
+                    console.log('enter f, look back');
+                    mat4.translate(cameraFrontMatrix, [0, 0, -move_step], cameraFrontMatrix);
+              } 
+              mat4.multiply(cameraFrontMatrix, vMatrix, vMatrix);
+              if (camera_mode == 1)
+                  mat4.set(vMatrix, first_vMatrix);
+              else 
+                  mat4.set(vMatrix, third_vMatrix);
+              drawScene();
+              break;
           case 49:
               console.log('enter 1, first person mode');
               mat4.set(first_vMatrix, vMatrix);
@@ -1364,4 +1418,20 @@ function popMatrix(){
               drawScene();
               break;
       }
+}
+
+function ModeTank(mode){
+    tank_texture_mode = mode;
+    drawScene();
+}
+
+function ModeTeardrop(texture_mode, geom_mode){
+    teardrop_texture_mode = texture_mode;
+    teardrop_geom_mode = geom_mode;
+    drawScene();
+}
+
+function ModeScene(mode){
+    scene_mode = mode;
+    drawScene();
 }
