@@ -963,12 +963,14 @@ function drawScene() {
     
     // draw skybox 
     drawSkybox();
+    drawLightSource();
     if (scene_mode != 2){
-        drawLightSource();
         drawTank(attackX);
+    } 
+    if (scene_mode != 3){
+        drawAttack(attackX);
     }
-    drawAttack(attackX);
-
+    
     // Call drawScene again next frame
     if (scene_mode == 0)
         requestAnimationFrame(drawScene);
@@ -1002,7 +1004,7 @@ function drawTank(attackX){
     mat4.identity(mMatrix); 
     use_texture = tank_texture_mode;
 
-    if (attackX > attack_finished){
+    if (attackX > attack_finished || scene_mode == 3){
         mat_ambient = [0, 0.15, 0, 1]; 
         mat_diffuse= [0.0, 0.2, 0, 1]; 
         mat_specular = [0.5, 0.5, 0.5, 1]; 
@@ -1081,7 +1083,7 @@ function drawTank(attackX){
       drawLoaded();
     mat4.set(popMatrix(), mMatrix);
 
-    if (attackX > attack_finished){
+    if (attackX > attack_finished || scene_mode == 3){
         mat_ambient = [0, 0.15, 0, 1]; 
         mat_diffuse= [0.0, 0.2, 0, 1]; 
         mat_specular = [0.5, 0.5, 0.5, 1]; 
